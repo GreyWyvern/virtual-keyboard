@@ -4,6 +4,8 @@ Add a javascript virtual keyboard to text, password, textarea, and number inputs
 
 Includes a "User Script" version that can be added to browsers such as Firefox to enable the keyboard on all pages.
 
+See the project page at [greywyvern.com](https://greywyvern.com/code/javascript/keyboard/) for examples and instructions.
+
 SVG icon modified from [Icon Fonts](https://www.onlinewebfonts.com/icon); licenced by CC BY 3.0.
 
 ## Keyboard Credits
