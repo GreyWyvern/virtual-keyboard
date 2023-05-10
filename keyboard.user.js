@@ -10,7 +10,7 @@
 
 /**
  * Virtual Keyboard Interface User Javascript - v1.53
- *   Copyright (c) 2022 - GreyWyvern
+ *   Copyright (c) 2023 - GreyWyvern
  *
  * Add a script-driven keyboard interface to text fields, password
  * fields and textareas automatically in Opera, Firefox and Chrome.
@@ -25,10 +25,9 @@
 (function() {
   let self = this;
 
-  let scripts = document.getElementsByTagName('script');
-  let scrpath = new URL(scripts[scripts.length - 1].src);
 
-  this.VKI_version = '1.53';
+
+
   this.VKI_showVersion = true; // Display the version number
   this.VKI_deadBox = true; // Show the dead keys checkbox
   this.VKI_deadkeysOn = false;  // Turn dead keys on by default
@@ -40,18 +39,19 @@
   this.VKI_sizeAdj = true;  // Allow user to adjust keyboard size
   this.VKI_clearPasswords = false;  // Clear password fields on focus
   this.VKI_flashPassword = 1000; // Flash last character of password: 0 = disabled, > 0 = delay in ms
-  this.VKI_imageURI = 'keyboard.svg';  // If empty string, use imageless mode
+
   this.VKI_clickless = 0;  // 0 = disabled, > 0 = delay in ms
   this.VKI_activeTab = 0;  // Tab moves to next: 1 = element, 2 = keyboard enabled element
   this.VKI_enterSubmit = true;  // Submit forms when Enter is pressed
   this.VKI_keyCenter = 3; // If this many or fewer keys in a row, center the row
 
   // Do not touch these
+  this.VKI_version = '1.53';
   this.VKI_target = false;
   this.VKI_shift = this.VKI_shiftlock = false;
   this.VKI_altgr = this.VKI_altgrlock = false;
   this.VKI_dead = false;
-  this.VKI_path = scrpath.pathname.replace(/\/[^\/]*$/, '/');
+
 
   this.VKI_isIE = /*@cc_on!@*/false;
   this.VKI_isIE6 = /*@if(@_jscript_version == 5.6)!@end@*/false;
@@ -1405,7 +1405,7 @@
     this.VKI_iframe.style.border = '0 none';
     this.VKI_iframe.style.filter = 'mask()';
     this.VKI_iframe.style.zIndex = '999999';
-    this.VKI_iframe.src = this.VKI_imageURI;
+    this.VKI_iframe.src = 'about:blank';
   }
 
 

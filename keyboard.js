@@ -1,6 +1,6 @@
 /**
- * Javascript Virtual Keyboard Interface - v1.53
- *   Copyright (c) 2022 - GreyWyvern
+ * Virtual Keyboard Interface - v1.53
+ *   Copyright (c) 2023 - GreyWyvern
  *
  * Add a script-driven keyboard interface to text fields, password
  * fields and textareas.
@@ -14,10 +14,9 @@ var VKI_attach, VKI_close;
 (function() {
   let self = this;
 
-  let scripts = document.getElementsByTagName('script');
-  let scrpath = new URL(scripts[scripts.length - 1].src);
+  let script = document.currentScript || document.querySelector('script[src*="keyboard.js"]');
+  let scrpath = new URL(script.src);
 
-  this.VKI_version = '1.53';
   this.VKI_showVersion = true; // Display the version number
   this.VKI_deadBox = true; // Show the dead keys checkbox
   this.VKI_deadkeysOn = false;  // Turn dead keys on by default
@@ -36,6 +35,7 @@ var VKI_attach, VKI_close;
   this.VKI_keyCenter = 3; // If this many or fewer keys in a row, center the row
 
   // Do not touch these
+  this.VKI_version = '1.53';
   this.VKI_target = false;
   this.VKI_shift = this.VKI_shiftlock = false;
   this.VKI_altgr = this.VKI_altgrlock = false;
@@ -1409,7 +1409,7 @@ var VKI_attach, VKI_close;
     this.VKI_iframe.style.border = '0 none';
     this.VKI_iframe.style.filter = 'mask()';
     this.VKI_iframe.style.zIndex = '999999';
-    this.VKI_iframe.src = this.VKI_imageURI;
+    this.VKI_iframe.src = 'about:blank';
   }
 
 
