@@ -2,6 +2,8 @@
 
 Add a javascript virtual keyboard to text, password, textarea, and number inputs. Good for kiosk use, or to allow convenient input of characters from different languages.
 
+![example01](https://github.com/GreyWyvern/virtual-keyboard/assets/137631/9f877409-f29b-43d5-8605-a39210cee802)
+
 Includes a "User Script" version that can be added to browsers such as Firefox to enable the keyboard on all pages.
 
 See the project page at [greywyvern.com](https://greywyvern.com/code/javascript/keyboard/) for examples and instructions.
