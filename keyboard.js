@@ -1405,7 +1405,7 @@ var VKI_attach, VKI_close;
 
   if (this.VKI_isIE6) {
     this.VKI_iframe = document.createElement('iframe');
-    this.VKI_iframe.style.position = 'absolute';
+    this.VKI_iframe.style.position = 'fixed';
     this.VKI_iframe.style.border = '0 none';
     this.VKI_iframe.style.filter = 'mask()';
     this.VKI_iframe.style.zIndex = '999999';
@@ -1726,18 +1726,9 @@ var VKI_attach, VKI_close;
         kbNumpad.style.display = kbNumpad.previousStyle;
       }
 
-      let elemStep = this.VKI_target;
-      this.VKI_target.keyboardPosition = 'absolute';
-      do {
-        if (VKI_getStyle(elemStep, 'position') == 'fixed') {
-          this.VKI_target.keyboardPosition = 'fixed';
-          break;
-        }
-      } while (elemStep = elemStep.offsetParent);
-
       if (this.VKI_isIE6) document.body.appendChild(this.VKI_iframe);
       document.body.appendChild(this.VKI_keyboard);
-      this.VKI_keyboard.style.position = this.VKI_target.keyboardPosition;
+      this.VKI_keyboard.style.position = 'fixed';
       if (this.VKI_isOpera) this.VKI_keyboard.reflow();
 
       this.VKI_position(true);
@@ -1754,19 +1745,19 @@ var VKI_attach, VKI_close;
    */
   this.VKI_position = function(force) {
     if (self.VKI_target) {
-      let kPos = VKI_findPos(self.VKI_keyboard), wDim = VKI_innerDimensions(), sDis = VKI_scrollDist();
+      let kPos = VKI_findPos(self.VKI_keyboard), wDim = VKI_innerDimensions();
       let place = false, fudge = self.VKI_target.offsetHeight + 3;
       if (force !== true) {
-        if (kPos[1] + self.VKI_keyboard.offsetHeight - sDis[1] - wDim[1] > 0) {
+        if (kPos[1] + self.VKI_keyboard.offsetHeight > wDim[1]) {
           place = true;
           fudge = -self.VKI_keyboard.offsetHeight - 3;
-        } else if (kPos[1] - sDis[1] < 0) place = true;
+        }
       }
       if (place || force === true) {
         let iPos = VKI_findPos(self.VKI_target), scr = self.VKI_target;
         while (scr = scr.parentNode) {
           if (scr == document.body) break;
-          if (scr.scrollHeight > scr.offsetHeight || scr.scrollWidth > scr.offsetWidth) {
+          if (scr.scrollHeight > scr.clientHeight || scr.scrollWidth > scr.clientWidth) {
             if (!scr.getAttribute('VKI_scrollListener')) {
               scr.setAttribute('VKI_scrollListener', true);
               VKI_addListener(scr, 'scroll', function() { self.VKI_position(true); }, false);
@@ -1819,7 +1810,6 @@ var VKI_attach, VKI_close;
     }
   };
 
-
   /* ***** Private functions *************************************** */
   function VKI_addListener(elem, type, func, cap) {
     if (elem.addEventListener) {
@@ -1829,16 +1819,7 @@ var VKI_attach, VKI_close;
   }
 
   function VKI_findPos(obj) {
-    let curleft = curtop = 0, scr = obj;
-    while ((scr = scr.parentNode) && scr != document.body) {
-      curleft -= scr.scrollLeft || 0;
-      curtop -= scr.scrollTop || 0;
-    }
-    do {
-      curleft += obj.offsetLeft;
-      curtop += obj.offsetTop;
-    } while (obj = obj.offsetParent);
-    return [curleft, curtop];
+    return [obj.getBoundingClientRect().left, obj.getBoundingClientRect().top];
   }
 
   function VKI_innerDimensions() {
@@ -1851,28 +1832,8 @@ var VKI_attach, VKI_close;
     return [0, 0];
   }
 
-  function VKI_scrollDist() {
-    let html = document.getElementsByTagName('html')[0];
-    if (html.scrollTop && document.documentElement.scrollTop) {
-      return [html.scrollLeft, html.scrollTop];
-    } else if (html.scrollTop || document.documentElement.scrollTop) {
-      return [html.scrollLeft + document.documentElement.scrollLeft, html.scrollTop + document.documentElement.scrollTop];
-    } else if (document.body.scrollTop)
-      return [document.body.scrollLeft, document.body.scrollTop];
-    return [0, 0];
-  }
-
-  function VKI_getStyle(obj, styleProp) {
-    let y;
-    if (obj.currentStyle) {
-      y = obj.currentStyle[styleProp];
-    } else if (window.getComputedStyle)
-      y = window.getComputedStyle(obj, null)[styleProp];
-    return y;
-  }
-
-  VKI_addListener(window, 'resize', this.VKI_position, false);
-  VKI_addListener(window, 'scroll', this.VKI_position, false);
+  VKI_addListener(window, 'resize', function (){ self.VKI_position(true);}, false);
+  VKI_addListener(window, 'scroll', function (){ self.VKI_position(true);}, false);
   this.VKI_kbsize();
   VKI_addListener(window, 'load', VKI_buildKeyboardInputs, false);
   // VKI_addListener(window, 'load', function() {

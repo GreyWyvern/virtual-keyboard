@@ -1,5 +1,5 @@
 #keyboardInputMaster {
-  position:absolute;
+  position:fixed;
   font:normal 0.8rem Arial,sans-serif;
   border-top:0.1em solid #eeeeee;
   border-right:0.1em solid #888888;
