@@ -1,5 +1,5 @@
 #keyboardInputMaster {
-  position:fixed;
+  position:absolute;
   font:normal 0.8rem Arial,sans-serif;
   border-top:0.1em solid #eeeeee;
   border-right:0.1em solid #888888;
@@ -23,6 +23,9 @@
   pointer-events:auto;
   -moz-user-select:none;
   cursor:default;
+}
+#keyboardInputMaster.keyboard-master-fixed {
+  position:fixed;
 }
 #keyboardInputMaster * {
   position:static;
