@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <link rel="stylesheet" href="keyboard.css">
+    <title>Test Keyboard</title>
+    <style>
+        .form-holder {
+            position: fixed;
+            width: 400px;
+            height: auto;
+            background: lightblue;
+            top: 10%;
+            left: 70%;
+        }
+
+        .form-holder-transform {
+            top: 50%;
+            left: 50%;
+            -ms-transform: translate(-50%, -50%);
+            transform: translate3d(-200px, -350px, 0)
+        }
+    </style>
+</head>
+<body>
+    <div style="position: fixed;bottom:0;right: 0;">info:<span id="pos-info"></span></div>
+    <input type="text" value="">
+    <div style="padding-left:250px ;">
+        <input width="100px" type="text" value="">
+    </div>
+    <div style="width: 500px;height:300px;overflow: auto;background-color: antiquewhite;">
+        overflow, due to scroll div the keyboard position should change.
+        <br/>
+        due to page scroll , this div,input and keyboard position should change all together.
+        <br>
+        <div style="padding-left: 250px;">
+            <div style="height: 150px;"></div>
+            <input id="inputInScroll" width="100px" type="text" value="">
+        </div>
+
+        <div style="height: 500px;width: 1000px;background-color: lightcoral;">Scrolled horizontaly dive</div>
+    </div>
+
+    <div class="form-holder">
+        <input id="inputInFixed" type="text" value="">
+        <div>fixed box without transform</div>
+    </div>
+    <div class="form-holder form-holder-transform">
+        <input type="text" value="">
+        <div>fixed box transformed , while page scroll the keyboard position should not changed.</div>
+        <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+        <input type="text" value="">
+        <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+        <input type="text" value="">
+        <br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br /><br />
+        Keyboard should place up to input
+        <input type="text" value="">
+    </div>
+    <div style="height: 100vh;">
+    </div>
+    <script src="keyboard.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll("input").forEach(function (elm) {
+                if (!elm.VKI_attached) VKI_attach(elm);
+            });
+        });
+    </script>
+</body>
+</html>
