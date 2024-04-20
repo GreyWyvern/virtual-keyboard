@@ -24,9 +24,6 @@
   -moz-user-select:none;
   cursor:default;
 }
-#keyboardInputMaster.keyboard-master-fixed {
-  position:fixed;
-}
 #keyboardInputMaster * {
   position:static;
   color:#000000;

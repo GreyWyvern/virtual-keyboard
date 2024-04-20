@@ -1728,11 +1728,9 @@ var VKI_attach, VKI_close;
 
       let elemStep = this.VKI_target;
       this.VKI_target.keyboardPosition = 'absolute';
-      this.VKI_keyboard.classList.remove("keyboard-master-fixed");
       do {
         if (VKI_getStyle(elemStep, 'position') == 'fixed') {
           this.VKI_target.keyboardPosition = 'fixed';
-          this.VKI_keyboard.classList.add("keyboard-master-fixed");
           break;
         }
       } while (elemStep = elemStep.offsetParent);
@@ -1759,13 +1757,7 @@ var VKI_attach, VKI_close;
       let kPos = VKI_findPos(self.VKI_keyboard), wDim = VKI_innerDimensions(), sDis = VKI_scrollDist();
       let place = false, fudge = self.VKI_target.offsetHeight + 3;
       if (force !== true) {
-        if(self.VKI_target.keyboardPosition == 'fixed')
-        {
-          if (kPos[1] + self.VKI_keyboard.offsetHeight > wDim[1]) {
-            place = true;
-            fudge = -self.VKI_keyboard.offsetHeight - 3;
-          }
-        } else if (kPos[1] + self.VKI_keyboard.offsetHeight - sDis[1] - wDim[1] > 0) {
+        if (kPos[1] + self.VKI_keyboard.offsetHeight - sDis[1] - wDim[1] > 0) {
           place = true;
           fudge = -self.VKI_keyboard.offsetHeight - 3;
         } else if (kPos[1] - sDis[1] < 0) place = true;
@@ -1774,7 +1766,7 @@ var VKI_attach, VKI_close;
         let iPos = VKI_findPos(self.VKI_target), scr = self.VKI_target;
         while (scr = scr.parentNode) {
           if (scr == document.body) break;
-          if (scr.scrollHeight > scr.clientHeight || scr.scrollWidth > scr.clientWidth) {
+          if (scr.scrollHeight > scr.offsetHeight || scr.scrollWidth > scr.offsetWidth) {
             if (!scr.getAttribute('VKI_scrollListener')) {
               scr.setAttribute('VKI_scrollListener', true);
               VKI_addListener(scr, 'scroll', function() { self.VKI_position(true); }, false);
@@ -1884,8 +1876,8 @@ var VKI_attach, VKI_close;
     return y;
   }
 
-  VKI_addListener(window, 'resize', function (){ self.VKI_position(true);}, false);
-  VKI_addListener(window, 'scroll', function (){ self.VKI_position(true);}, false);
+  VKI_addListener(window, 'resize', this.VKI_position, false);
+  VKI_addListener(window, 'scroll', this.VKI_position, false);
   this.VKI_kbsize();
   VKI_addListener(window, 'load', VKI_buildKeyboardInputs, false);
   // VKI_addListener(window, 'load', function() {
