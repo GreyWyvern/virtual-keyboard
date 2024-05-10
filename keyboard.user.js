@@ -1825,16 +1825,21 @@
   }
 
   function VKI_findPos(obj) {
-    let curleft = curtop = 0, scr = obj;
-    while ((scr = scr.parentNode) && scr != document.body) {
-      curleft -= scr.scrollLeft || 0;
-      curtop -= scr.scrollTop || 0;
+    if (self.VKI_target.keyboardPosition != 'fixed') {
+      let curleft = curtop = 0, scr = obj;
+      while ((scr = scr.parentNode) && scr != document.body) {
+        curleft -= scr.scrollLeft || 0;
+        curtop -= scr.scrollTop || 0;
+      }
+      do {
+        curleft += obj.offsetLeft;
+        curtop += obj.offsetTop;
+      } while (obj = obj.offsetParent);
+      return [curleft, curtop];
+    } else {
+      let boundingRect = obj.getBoundingClientRect();
+      return [boundingRect.left, boundingRect.top];
     }
-    do {
-      curleft += obj.offsetLeft;
-      curtop += obj.offsetTop;
-    } while (obj = obj.offsetParent);
-    return [curleft, curtop];
   }
 
   function VKI_innerDimensions() {
