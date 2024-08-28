@@ -377,6 +377,8 @@ function clearCurrent() {
 
   let script = document.currentScript || document.querySelector('script[src*="keyboard.js"]');
   let scrpath = new URL(script.src);
+  let kEventListeners = false; //Bool for if Event listeners just for Korean exist
+  let search = null; //For Korean
 
   this.VKI_showVersion = true; // Display the version number
   this.VKI_deadBox = true; // Show the dead keys checkbox
@@ -424,7 +426,8 @@ function clearCurrent() {
     '09': 'Version',
     '10': 'Decrease keyboard size',
     '11': 'Increase keyboard size',
-    '12': 'Backspace'
+    '12': 'Backspace',
+    '13': 'Korean Complete Button',
   };
 
 
@@ -826,14 +829,14 @@ function clearCurrent() {
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['kn'] };
 
-  this.VKI_layout['\ud55c\uad6d\uc5b4'] = {
-    'name': 'Korean', 'keys': [
-      [['`', '~', '`', '~'], ['1', '!', '1', '!'], ['2', '@', '2', '@'], ['3', '#', '3', '#'], ['4', '$', '4', '$'], ['5', '%', '5', '%'], ['6', '^', '6', '^'], ['7', '&', '7', '&'], ['8', '*', '8', '*'], ['9', ')', '9', ')'], ['0', '(', '0', '('], ['-', '_', '-', '_'], ['=', '+', '=', '+'], ['\u20A9', '|', '\u20A9', '|'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['\u1107', '\u1108', 'q', 'Q'], ['\u110C', '\u110D', 'w', 'W'], ['\u1103', '\u1104', 'e', 'E'], ['\u1100', '\u1101', 'r', 'R'], ['\u1109', '\u110A', 't', 'T'], ['\u116D', '', 'y', 'Y'], ['\u1167', '', 'u', 'U'], ['\u1163', '', 'i', 'I'], ['\u1162', '\u1164', 'o', 'O'], ['\u1166', '\u1168', 'p', 'P'], ['[', '{', '[', '{'], [']', '}', ']', '}']],
-      [['Caps', 'Caps'], ['\u1106', '', 'a', 'A'], ['\u1102', '', 's', 'S'], ['\u110B', '', 'd', 'D'], ['\u1105', '', 'f', 'F'], ['\u1112', '', 'g', 'G'], ['\u1169', '', 'h', 'H'], ['\u1165', '', 'j', 'J'], ['\u1161', '', 'k', 'K'], ['\u1175', '', 'l', 'L'], [';', ':', ';', ':'], ['\'', '"', '\'', '"'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['\u110F', '', 'z', 'Z'], ['\u1110', '', 'x', 'X'], ['\u110E', '', 'c', 'C'], ['\u1111', '', 'v', 'V'], ['\u1172', '', 'b', 'B'], ['\u116E', '', 'n', 'N'], ['\u1173', '', 'm', 'M'], [',', '<', ',', '<'], ['.', '>', '.', '>'], ['/', '?', '/', '?'], ['Shift', 'Shift']],
-      [[' ', ' ', ' ', ' '], ['Kor', 'Alt']]
-    ], 'lang': ['ko'] };
+    this.VKI_layout['\ud55c\uad6d\uc5b4'] = {
+      'name': 'Korean', 'keys': [
+        [['`', '~', '`', '~'], ['1', '!', '1', '!'], ['2', '@', '2', '@'], ['3', '#', '3', '#'], ['4', '$', '4', '$'], ['5', '%', '5', '%'], ['6', '^', '6', '^'], ['7', '&', '7', '&'], ['8', '*', '8', '*'], ['9', ')', '9', ')'], ['0', '(', '0', '('], ['-', '_', '-', '_'], ['=', '+', '=', '+'], ['\u20A9', '|', '\u20A9', '|'], ['Bksp', 'Bksp']],
+        [['Tab', 'Tab'], ['\u3142', '\u3143', 'q', 'Q'], ['\u3148', '\u3149', 'w', 'W'], ['\u3137', '\u3138', 'e', 'E'], ['\u3131', '\u3132', 'r', 'R'], ['\u3145', '\u3146', 't', 'T'], ['\u315B', '', 'y', 'Y'], ['\u3155', '', 'u', 'U'], ['\u3151', '', 'i', 'I'], ['\u3150', '\u3152', 'o', 'O'], ['\u3154', '\u3156', 'p', 'P'], ['[', '{', '[', '{'], [']', '}', ']', '}']],
+        [['Caps', 'Caps'], ['\u3141', '', 'a', 'A'], ['\u3134', '', 's', 'S'], ['\u3147', '', 'd', 'D'], ['\u3139', '', 'f', 'F'], ['\u314E', '', 'g', 'G'], ['\u3157', '', 'h', 'H'], ['\u3153', '', 'j', 'J'], ['\u314F', '', 'k', 'K'], ['\u3163', '', 'l', 'L'], [';', ':', ';', ':'], ['\'', '"', '\'', '"'], ['Enter', 'Enter']],
+        [['Shift', 'Shift'], ['\u314B', '', 'z', 'Z'], ['\u314C', '', 'x', 'X'], ['\u314A', '', 'c', 'C'], ['\u314D', '', 'v', 'V'], ['\u3160', '', 'b', 'B'], ['\u315C', '', 'n', 'N'], ['\u3161', '', 'm', 'M'], [',', '<', ',', '<'], ['.', '>', '.', '>'], ['/', '?', '/', '?'], ['Shift', 'Shift']],
+        [[' ', ' ', ' ', ' '], ['Alt', 'Alt'], ['Complete', 'Complete']]
+      ], 'lang': ['ko'] };
 
   this.VKI_layout['Kurd\u00ee'] = {
     'name': 'Kurdish', 'keys': [
@@ -1690,6 +1693,11 @@ function clearCurrent() {
           VKI_addListener(clrspan, 'click', function() {
             self.VKI_target.value = '';
             self.VKI_target.focus();
+            //Clear Complete button when clear is pressed.
+            if (self.VKI_kt == '\ud55c\uad6d\uc5b4') {
+              document.getElementById('completeBtn').textContent = '';
+              current = [];
+            }
             return false;
           }, false);
           VKI_mouseEvents(clrspan);
@@ -1887,6 +1895,18 @@ function clearCurrent() {
                       return true;
                     }, false);
                     break;
+                    //Only for Korean, finishes Hangul/Jamo that was being worked on
+                    case 'Complete':
+                      td.title = this.VKI_i18n['13'];
+                      td.id = 'completeBtn';
+                      td.textContent = '';
+                      VKI_addListener(td, 'click', function() {
+                        self.VKI_target.focus();
+                        current = [];
+                        document.getElementById('completeBtn').textContent = ''; //clear text
+                        self.VKI_target.setSelectionRange(self.VKI_target.selectionStart, self.VKI_target.selectionStart); //keeps cursor in place
+                      }, false);
+                      break;
                   default:
                     VKI_addListener(td, 'click', VKI_keyClick, false);
 
@@ -1903,6 +1923,14 @@ function clearCurrent() {
     if (this.VKI_isIE6) {
       this.VKI_iframe.style.width = this.VKI_keyboard.offsetWidth + 'px';
       this.VKI_iframe.style.height = this.VKI_keyboard.offsetHeight + 'px';
+    }
+    //remove Korean event listeners if they exist
+    if (kEventListeners) {
+      removeKEventListeners();
+    }
+    //add Korean event listeners if Korean Layout being built
+    if (this.VKI_target != false && this.VKI_kt == '\ud55c\uad6d\uc5b4') {
+      addKEventListener(this.VKI_target);
     }
   };
 
@@ -1950,7 +1978,7 @@ function clearCurrent() {
           case 'Caps':
             if (this.VKI_shiftlock) tds[y].classList.add('pressed');
             break;
-          case 'Tab': case 'Enter': case 'Bksp': break;
+          case 'Tab': case 'Enter': case 'Bksp': case 'Complete': break;
           default:
             if (type) {
               tds[y].removeChild(tds[y].firstChild);
@@ -1994,6 +2022,37 @@ function clearCurrent() {
         this.VKI_target.value.length < this.VKI_target.maxlength) {
       if (this.VKI_target.setSelectionRange && !this.VKI_target.readOnly && !this.VKI_isIE) {
         let rng = [this.VKI_target.selectionStart, this.VKI_target.selectionEnd];
+        //For Korean
+        //If input is a Jamo key
+        if ((text.charCodeAt() >= 12593 && text.charCodeAt() <= 12643)) {
+          hangulOutput = jamoKeyInput(text); //Get the Hangul Unicode with new added Jamo
+          //Jamo was added to Hangul, need to remove previous one
+          if (!hangulOutput[1]) {
+              hangulEdit = true;
+              //remove char before
+              if (rng[0] < rng[1])
+                  rng[0]++;
+              self.VKI_target.value = self.VKI_target.value.substr(0, rng[0] - 1) + self.VKI_target.value.substr(rng[1]);
+              rng[0]--;
+              rng[1]--;
+              text = hangulOutput[0];
+          }
+          else { //Start of new Hangul, so no need to delete last output
+              text = hangulOutput[0];
+            }
+          if (hangulOutput[0].length > 1) {
+          hangulOutput[0] = hangulOutput[0][1];
+          }
+          document.getElementById('completeBtn').textContent = hangulOutput[0];
+        }
+        //non-Hangul/Jamo input resets current
+        else if (!(text.charCodeAt() >= 44032 && text.charCodeAt() <= 55203)) {
+                current = [];
+                if (this.VKI_kt == '\ud55c\uad6d\uc5b4') document.getElementById('completeBtn').textContent = '';
+        }
+        else if (text.charCodeAt() >= 44032 && text.charCodeAt() <= 55203) {
+          document.getElementById('completeBtn').textContent = text;
+        }
         this.VKI_target.value = this.VKI_target.value.substr(0, rng[0]) + text + this.VKI_target.value.substr(rng[1]);
         if (text == "\n" && this.VKI_isOpera) rng[0]++;
         this.VKI_target.setSelectionRange(rng[0] + text.length, rng[0] + text.length);
@@ -2022,9 +2081,32 @@ function clearCurrent() {
     self.VKI_target.focus();
     if (self.VKI_target.setSelectionRange && !self.VKI_target.readOnly) {
       let rng = [self.VKI_target.selectionStart, self.VKI_target.selectionEnd];
-      if (rng[0] < rng[1]) rng[0]++;
-      self.VKI_target.value = self.VKI_target.value.substr(0, rng[0] - 1) + self.VKI_target.value.substr(rng[1]);
-      self.VKI_target.setSelectionRange(rng[0] - 1, rng[0] - 1);
+      //For Korean
+      let lastInput = self.VKI_target.value.substr(rng[0] - 1, rng[1]);
+      //If Hangul or non-lead Jamo is being removed
+      if ((lastInput.charCodeAt() >= 12593 && lastInput.charCodeAt() <= 12643) || (lastInput.charCodeAt() >= 44032 && lastInput.charCodeAt() <= 55203)) { //check to see if the keyboard being used is Korean
+        if (self.VKI_target.value.substr(0, rng[1]) != '') {
+          //Check if nothings in current, if not get the keys in the Hangul before cursor in current
+          if (current.length == 0) GetHangulParts(lastInput);
+          current.pop();
+          if (rng[0] < rng[1]) rng[0]++;
+          self.VKI_target.value = self.VKI_target.value.substr(0, rng[0] - 1) + self.VKI_target.value.substr(rng[1]); //removes the char
+          //replace the new Hangul with removed Jamo
+          self.VKI_target.setSelectionRange(rng[0] - 1, rng[0] - 1); //keeps cursor inplace
+          if (current.length == 1) self.VKI_insert(current[0]);
+          if (current.length > 1) self.VKI_insert(Hangul(current));
+          if (current.length == 0) {
+          if (this.VKI_kt == '\ud55c\uad6d\uc5b4') document.getElementById('completeBtn').textContent = '';
+          }
+        }
+      }
+      //remove non-Hangul/Jamo
+      else {
+        if (this.VKI_kt == '\ud55c\uad6d\uc5b4') document.getElementById('completeBtn').textContent = '';
+          if (rng[0] < rng[1]) rng[0]++;
+          self.VKI_target.value = self.VKI_target.value.substr(0, rng[0] - 1) + self.VKI_target.value.substr(rng[1]);
+          self.VKI_target.setSelectionRange(rng[0] - 1, rng[0] - 1);
+      }
     } else if (self.VKI_target.createTextRange && !self.VKI_target.readOnly) {
       try {
         self.VKI_target.range.select();
@@ -2106,6 +2188,10 @@ function clearCurrent() {
       this.VKI_target.blur();
       this.VKI_target.focus();
     } else this.VKI_close();
+    //add Korean specific event listeners if layout is Korean
+    if(this.VKI_kt == '\ud55c\uad6d\uc5b4') {
+      addKEventListener(this.VKI_target);
+    }
   };
 
 
@@ -2161,6 +2247,10 @@ function clearCurrent() {
    */
   this.VKI_close = VKI_close = function() {
     if (this.VKI_target) {
+      if (self.VKI_kt == '\ud55c\uad6d\uc5b4') { //layout on Korean
+        current = [];
+        document.getElementById('completeBtn').textContent = '';
+      }
       if (this.VKI_target.getAttribute('VKI_type') == 'password')
         this.VKI_target.readOnly = this.VKI_target.storeReadOnly;
       if (this.VKI_target.getAttribute('VKI_numpadInput') == 'true')
@@ -2177,6 +2267,10 @@ function clearCurrent() {
       if (this.VKI_isIE) {
         setTimeout(function() { self.VKI_target = false; }, 0);
       } else this.VKI_target = false;
+      //remove Korean specific event builders if they exist
+      if (kEventListeners) {
+        removeKEventListeners();
+      }
     }
   };
 
@@ -2244,4 +2338,25 @@ function clearCurrent() {
   // VKI_addListener(window, 'load', function() {
   //   setTimeout(VKI_buildKeyboardInputs, 5);
   // }, false);
+
+  // Adds Korean specific event listeners for if the textbox is clicked or a physical key is pushed
+  function addKEventListener(textbox) {
+    search = textbox;
+    textbox.addEventListener('click', kEvent, true);
+    textbox.addEventListener('keydown', kEvent, true);
+    kEventListeners = true;
+  }
+
+  // Removes Korean specific event listeners when the a keyboard is changed from Korean
+  function removeKEventListeners() {
+    search.removeEventListener('click', kEvent, true);
+    search.removeEventListener('keydown', kEvent, true);
+    kEventListeners = false;
+  }
+
+  // For Korean, clears current and complete button
+  function kEvent() {
+    current = [];
+    document.getElementById('completeBtn').textContent = '';
+  }
 })();
