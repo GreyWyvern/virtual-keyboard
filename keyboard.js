@@ -12,366 +12,6 @@
  */
 var VKI_attach, VKI_close;
 
-/***********************************************For Korean input***********************************************/
-
-let current = []; //Array of Jamo in current Hangul
-let display = null; //Unicode for Hangul displayed on keyboard, based off what's in current
-
-/**
-* Object of objects for each jamo key.
-* Each key has a lead, vowel, and tail number that is null or the number associated with Hangul Unicode algorithm.
-* Every key also has a second that is null or an array of keys that can be the second key in a two key jamo char
-*/
-var jamo = {
-  'ㄱ': {lead: 1, vowel: null, tail: 1, second: ['ㅅ']},
-  'ㄲ': {lead: 2, vowel: null, tail: 2, second: null},
-  'ㄴ': {lead: 3, vowel: null, tail: 4, second: ['ㅈ', 'ㅎ']},
-  'ㄷ': {lead: 4, vowel: null, tail: 7, second: null},
-  'ㄸ': {lead: 5, vowel: null, tail: null, second: null},
-  'ㄹ': {lead: 6, vowel: null, tail: 8, second: ['ㄱ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅌ', 'ㅍ', 'ㅎ']},
-  'ㅁ': {lead: 7, vowel: null, tail: 16, second: null},
-  'ㅂ': {lead: 8, vowel: null, tail: 17, second: ['ㅅ']},
-  'ㅃ': {lead: 9, vowel: null, tail: null, second: null},
-  'ㅅ': {lead: 10, vowel: null, tail: 19, second: null},
-  'ㅆ': {lead: 11, vowel: null, tail: 20, second: null},
-  'ㅇ': {lead: 12, vowel: null, tail: 21, second: null},
-  'ㅈ': {lead: 13, vowel: null, tail: 22, second: null},
-  'ㅉ': {lead: 14, vowel: null, tail: null, second: null},
-  'ㅊ': {lead: 15, vowel: null, tail: 23, second: null},
-  'ㅋ': {lead: 16, vowel: null, tail: 24, second: null},
-  'ㅌ': {lead: 17, vowel: null, tail: 25, second: null},
-  'ㅍ': {lead: 18, vowel: null, tail: 26, second: null},
-  'ㅎ': {lead: 19, vowel: null, tail: 27, second: null},
-  'ㅏ': {lead: null, vowel: 1, tail: null, second: null},
-  'ㅐ': {lead: null, vowel: 2, tail: null, second: null},
-  'ㅑ': {lead: null, vowel: 3, tail: null, second: null},
-  'ㅒ': {lead: null, vowel: 4, tail: null, second: null},
-  'ㅓ': {lead: null, vowel: 5, tail: null, second: null},
-  'ㅔ': {lead: null, vowel: 6, tail: null, second: null},
-  'ㅕ': {lead: null, vowel: 7, tail: null, second: null},
-  'ㅖ': {lead: null, vowel: 8, tail: null, second: null},
-  'ㅗ': {lead: null, vowel: 9, tail: null, second: ['ㅏ', 'ㅐ', 'ㅣ']},
-  'ㅛ': {lead: null, vowel: 13, tail: null, second: null},
-  'ㅜ': {lead: null, vowel: 14, tail: null, second: ['ㅓ', 'ㅔ', 'ㅣ']},
-  'ㅠ': {lead: null, vowel: 18, tail: null, second: null},
-  'ㅡ': {lead: null, vowel: 19, tail: null, second: ['ㅣ']},
-  'ㅣ': {lead: null, vowel: 21, tail: null, second: null}
-}
-
-/**
-* An object of objects for every jamo vowel that is made up of two keys.
-* Each jamo has a vowel, which is the number associated with the Hangul algorithm,
-* and combo, which is the sum of the two vowels numbers for the two jamo keys that make it up.
-*/
-jamoDoubleVowels = {
-  'ㅘ': {vowel: 10, combo: 10, pair: ['ㅗ', 'ㅏ']},
-  'ㅙ': {vowel: 11, combo: 11, pair: ['ㅗ', 'ㅐ']},
-  'ㅚ': {vowel: 12, combo: 30, pair: ['ㅗ', 'ㅣ']},
-  'ㅝ': {vowel: 15, combo: 19, pair: ['ㅜ', 'ᅥ']},
-  'ㅞ': {vowel: 16, combo: 20, pair: ['ㅜ', 'ㅔ']},
-  'ㅟ': {vowel: 17, combo: 35, pair: ['ㅜ', 'ㅣ']},
-  'ㅢ': {vowel: 20, combo: 40, pair: ['ㅡ', 'ㅣ']}
-}
-
-/**
-* An object of objects for every jamo tail that is made up of two keys.
-* Each jamo has a tail, which is the number associated with the Hangul algorithm,
-* and combo, which is the sum of the two tail numbers for the two jamo keys that make it up.
-*/
-jamoDoubleTails = {
-  'ㄳ': {tail: 3, combo: 20, val: 3, pair: ['ㄱ', 'ㅅ']},
-  'ㄵ': {tail: 5, combo: 26, val: 5, pair: ['ㄴ', 'ᄌ']},
-  'ㄶ': {tail: 6, combo: 31, val: 6, pair: ['ㄴ', 'ㅎ']},
-  'ㄺ': {tail: 9, combo: 9, val: 9, pair: ['ㄹ', 'ㄱ']},
-  'ㄻ': {tail: 10, combo: 24, val: 10, pair: ['ㄹ', 'ㅁ']},
-  'ㄼ': {tail: 11, combo: 25, val: 11, pair: ['ㄹ', 'ㅂ']},
-  'ㄽ': {tail: 12, combo: 27, val: 12, pair: ['ㄹ', 'ㅅ']},
-  'ㄾ': {tail: 13, combo: 33, val: 13, pair: ['ㄹ', 'ㅌ']},
-  'ㄿ': {tail: 14, combo: 34, val: 14, pair: ['ㄹ', 'ㅍ']},
-  'ㅀ': {tail: 15, combo: 35, val: 15, pair: ['ㄹ','ㅎ']},
-  'ㅄ': {tail: 18, combo: 36, val: 18, pair: ['ㅂ', 'ㅅ']}
-}
-
-/**
-* Function called when Hangul is done being created. Finishes current Hangul and starts next one.
-* Clears current since there's no input.
-* @param {*} key: Unicode for first Jamo key in new Hangul input.
-* @returns Output from jamoKeyInput(): hangul unicode and bool.
-*/
-function end(key) {
-  current = [];
-  return jamoKeyInput(key);
-}
-
-/**
-* Current Hangul (that had it's tail droped when called) and starts a new one with the vowel
-* input and sets current to this.
-* @param {array} leadVowel the lead and tail (in that order)
-* @returns Output from jamoKeyInput(): hangul unicode and bool. (The hangul will be both the
-* altered old hangul and the new hangul)
-*/
-function newLeadVowel(leadVowel) {
-  var old = Hangul(current);
-  current = [];
-  current = leadVowel;
-  display = Hangul(current);
-  return [old+display, false];
-}
-
-/**
-* An algorithm that will find the Unicode for Hangul from the jamo given.
-* @param {Number} lead number associated to the lead for the algorithm.
-* @param {Number} vowel number associated to the vowel for the algorithm.
-* @param {Number} tail number associated to the tail for the algorithm.
-* @returns Unicode for Hangul from given parts
-*/
-function hangulAlgorithm(lead, vowel, tail) {
-  return String.fromCodePoint(tail + (vowel-1)*28 + (lead-1)*588 + 44032);
-}
-
-/**
-* Finds the jamo vowel char or number for the Hangul algorithm that is made of two keys.
-* @param {Number} sum sum of the two keys that make up the jamo
-* @param {Boolean} jamoChar char if true, Hangul algorithm number if false
-* @returns jamo unicode or int
-*/
-function findVowelPair(sum, jamoChar) {
-  for (jamoPair in jamoDoubleVowels) {
-    if (jamoDoubleVowels[jamoPair].combo == sum) {
-      if (jamoChar) {
-        return jamoPair;
-      }
-      else {
-        return jamoDoubleVowels[jamoPair].vowel
-      }
-    }
-  }
-}
-
-/**
-* Finds the jamo tail char or number for the Hangul algorithm that is made of two keys.
-* @param {Number} sum sum of the two keys that make up the jamo
-* @param {Boolean} jamoChar char if true, Hangul algorithm number if false
-* @returns jamo unicode or int
-*/
-function findTailPair(sum, jamoChar) {
-  for (jamoPair in jamoDoubleTails) {
-    if (jamoDoubleTails[jamoPair].combo == sum) {
-      if (jamoChar) {
-        return jamoPair;
-      }
-      else {
-        return jamoDoubleTails[jamoPair].tail
-      }
-    }
-  }
-}
-
-/**
-* Finds the Hangul unicode char from the given list of jamo chars.
-* Finds the values needed for hangulAlgorithm() and calls it.
-* @param {Array} jamoString array of jamo
-* @returns hangulAlgorithm output: Hangul Unicode
-*/
-function Hangul (jamoString) {
-  let v = null; //vowel
-    let t = null; //tail
-    if (jamoString.length == 1) return jamoString;
-  if (jamoString.length == 2) { //LV, VV, TT
-    if (jamo[jamoString[0]].lead != null && jamo[jamoString[1]].vowel != null) {
-      return hangulAlgorithm(jamo[jamoString[0]].lead, jamo[jamoString[1]].vowel, 0);
-    }
-    else if (jamo[jamoString[1]].tail != null && jamo[jamoString[0]].tail != null) {
-      return (findTailPair((jamo[jamoString[0]].tail + jamo[jamoString[1]].tail), true));
-    }
-    else if (jamo[jamoString[0]].vowel != null && jamo[jamoString[1]].vowel != null) {
-      return (findVowelPair((jamo[jamoString[0]].vowel + jamo[jamoString[1]].vowel), true));
-    }
-  }
-  else if (jamoString.length == 3) { //LVT, LVV
-    if (jamo[jamoString[2]].tail != null) {
-      return hangulAlgorithm(jamo[jamoString[0]].lead, jamo[jamoString[1]].vowel, jamo[jamoString[2]].tail);
-    }
-    else if (jamo[jamoString[2]].vowel != null) {
-      v = findVowelPair((jamo[jamoString[1]].vowel + jamo[jamoString[2]].vowel), false);
-      return hangulAlgorithm(jamo[jamoString[0]].lead, v, 0);
-    }
-  }
-  else if (jamoString.length == 4) { //LVVT, LVTT
-    if (jamo[jamoString[2]].vowel != null) {
-      v = findVowelPair((jamo[jamoString[1]].vowel + jamo[jamoString[2]].vowel), false);
-      return hangulAlgorithm(jamo[jamoString[0]].lead, v, jamo[jamoString[3]].tail);
-    }
-    else {
-      t = findTailPair((jamo[jamoString[2]].tail + jamo[jamoString[3]].tail), false);
-      return hangulAlgorithm(jamo[jamoString[0]].lead, jamo[jamoString[1]].vowel, t);
-    }
-  }
-  else if (jamoString.length == 5){ //LVVTT
-    v = findVowelPair((jamo[jamoString[1]].vowel + jamo[jamoString[2]].vowel), false);
-    t = findTailPair((jamo[jamoString[3]].tail + jamo[jamoString[4]].tail), false);
-    return hangulAlgorithm(jamo[jamoString[0]].lead, v, t);
-  }
-  return null;
-}
-
-/**
-* Handles everytime one of the jamo keys is clicked and builds the list of jamo that will build the Hangul.
-* Also return boolean for if the current Hangul needs deleted (it was altered).
-* @param {string} key string of the jamo key clicked.
-* @returns array of Hangul Unicode and boolean
-*/
-function jamoKeyInput(key) {
-  //first key in input
-  if (current.length == 0) {
-    current.push(key);
-    return [key, true];
-  }
-
-  //second key in input
-  else if (current.length == 1) { //LV, VV, TT
-    if (jamo[current[0]].lead != null && jamo[key].vowel != null) {
-      current.push(key);
-      return [Hangul(current), false];
-    }
-    else if (jamo[current[0]].second != null) {
-      if (jamo[current[0]].second.includes(key)) {
-        current.push(key);
-        display = Hangul(current);
-        current = [];
-        return [display, false];
-      }
-    }
-    return end(key);
-  }
-
-  //third key in input
-  else if (current.length == 2) {
-    //curent has to be a lead and vowel to have anything else added.
-    if (jamo[current[0]].lead != null && jamo[current[1]].vowel != null) {
-      if (jamo[key].tail != null) { //key is part of tail
-        current.push(key);
-        return[Hangul(current), false];
-      }
-      else if (jamo[current[1]].second != null) { //key is second part of vowel, LVV
-        if (jamo[current[1]].second.includes(key)) {
-          current.push(key);
-          display = Hangul(current);
-          return [display, false];
-        }
-        return end(key);
-      }
-      else {
-        return end(key);
-      }
-    }
-    else {
-      return end(key);
-    }
-  }
-
-  //fourth input
-  //key has to be tail to be apart of current Hangul
-  else if (current.length == 3) { // LVVT
-    if (jamo[key].vowel != null && jamo[current[2]].tail != null) { //next key is vowel(move tail)
-      return newLeadVowel([current.pop(), key]);
-    }
-    else if(jamo[current[2]].vowel != null && jamo[key].vowel == null) {
-      current.push(key);
-      return[Hangul(current), false];
-    }
-    else if (jamo[current[2]].second != null) { //LVTT
-      if (jamo[current[2]].second.includes(key)) {
-        current.push(key);
-        display = Hangul(current);
-        return [display, false];
-      }
-    }
-    return end(key);
-  }
-
-  //fifth input
-  //has to be second key in two part tail
-  else if (current.length == 4) {
-    if (jamo[key].vowel != null && jamo[current[3]].tail != null) { //next key is vowel(move tail)
-      return newLeadVowel([current.pop(), key]);
-    }
-    else if (jamo[current[3]].second != null) {
-      if (jamo[current[3]].second.includes(key)) {
-        current.push(key);
-        display = Hangul(current);
-        return [display, false];
-      }
-    }
-    return end(key);
-  }
-
-  //sixth input
-  //Start of new Hangul
-  else if (current.length == 5) {
-    if (jamo[key].vowel != null && jamo[current[4]].tail != null) { //next key is vowel(move tail)
-      return newLeadVowel([current.pop(), key]);
-    }
-    return end(key);
-  }
-}
-
-/**
-* Unicode for Hangul is given to find the jamo keys that make it up. It then sets curent to those parts.
-* Makes it the curent Hangul being worked on.
-* @param {*} Hangul Unicode of Hangul
-*/
-function GetHangulParts(Hangul) {
-  Hangul = Hangul.charCodeAt(); //convert unicode to decimal
-
-  //get tail, vowel, and lead values
-  var tail = Math.floor((Hangul - 44032)%28);
-  var vowel = Math.floor(1 + ((Hangul - 44032 - tail)%588)/28);
-  var lead = Math.floor(1 + (Hangul - 44032) / 588);
-
-  //Find unicode from values
-  for (const j in jamo) {
-    if (jamo[j].lead == lead) current.push(j);
-    if (jamo[j].vowel == vowel) vowel = j;
-    if (jamo[j].tail == tail) tail = j;
-  }
-
-  //Find two parts of vowel
-  if (Number.isInteger(vowel)) {
-    for (const j in jamoDoubleVowels) {
-      if (jamoDoubleVowels[j].vowel == vowel) {
-        current.push(jamoDoubleVowels[j].pair[0]);
-        current.push(jamoDoubleVowels[j].pair[1]);
-      }
-    }
-  }
-  else {
-    current.push(vowel);
-  }
-
-  //Find two parts of tail
-  if (Number.isInteger(tail)) {
-    for (const j in jamoDoubleTails) {
-      if (jamoDoubleTails[j].tail == tail) {
-        current.push(jamoDoubleTails[j].pair[0]);
-        current.push(jamoDoubleTails[j].pair[1]);
-      }
-    }
-  }
-  else {
-    current.push(tail);
-  }
-}
-
-function clearCurrent() {
-    if (self.VKI_kt == '\ud55c\uad6d\uc5b4') {
-        current = [];
-        document.getElementById('completeBtn').textContent = '';
-    }
-}
-
-//***********************************************End for Korean input***********************************************//
-
 (function() {
   let self = this;
 
@@ -429,6 +69,381 @@ function clearCurrent() {
     '12': 'Backspace',
     '13': 'Korean Complete Button',
   };
+
+
+  /***********************************************For Korean input***********************************************/
+
+  let VKI_KO_current = []; //Array of Jamo in current Hangul
+  let VKI_KO_display = null; //Unicode for Hangul displayed on keyboard, based off what's in VKI_KO_current
+
+  /**
+  * Object of objects for each jamo key.
+  * Each key has a lead, vowel, and tail number that is null or the number associated with Hangul Unicode algorithm.
+  * Every key also has a second that is null or an array of keys that can be the second key in a two key jamo char
+  */
+  var VKI_KO_jamo = {
+    'ㄱ': {lead: 1, vowel: null, tail: 1, second: ['ㅅ']},
+    'ㄲ': {lead: 2, vowel: null, tail: 2, second: null},
+    'ㄴ': {lead: 3, vowel: null, tail: 4, second: ['ㅈ', 'ㅎ']},
+    'ㄷ': {lead: 4, vowel: null, tail: 7, second: null},
+    'ㄸ': {lead: 5, vowel: null, tail: null, second: null},
+    'ㄹ': {lead: 6, vowel: null, tail: 8, second: ['ㄱ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅌ', 'ㅍ', 'ㅎ']},
+    'ㅁ': {lead: 7, vowel: null, tail: 16, second: null},
+    'ㅂ': {lead: 8, vowel: null, tail: 17, second: ['ㅅ']},
+    'ㅃ': {lead: 9, vowel: null, tail: null, second: null},
+    'ㅅ': {lead: 10, vowel: null, tail: 19, second: null},
+    'ㅆ': {lead: 11, vowel: null, tail: 20, second: null},
+    'ㅇ': {lead: 12, vowel: null, tail: 21, second: null},
+    'ㅈ': {lead: 13, vowel: null, tail: 22, second: null},
+    'ㅉ': {lead: 14, vowel: null, tail: null, second: null},
+    'ㅊ': {lead: 15, vowel: null, tail: 23, second: null},
+    'ㅋ': {lead: 16, vowel: null, tail: 24, second: null},
+    'ㅌ': {lead: 17, vowel: null, tail: 25, second: null},
+    'ㅍ': {lead: 18, vowel: null, tail: 26, second: null},
+    'ㅎ': {lead: 19, vowel: null, tail: 27, second: null},
+    'ㅏ': {lead: null, vowel: 1, tail: null, second: null},
+    'ㅐ': {lead: null, vowel: 2, tail: null, second: null},
+    'ㅑ': {lead: null, vowel: 3, tail: null, second: null},
+    'ㅒ': {lead: null, vowel: 4, tail: null, second: null},
+    'ㅓ': {lead: null, vowel: 5, tail: null, second: null},
+    'ㅔ': {lead: null, vowel: 6, tail: null, second: null},
+    'ㅕ': {lead: null, vowel: 7, tail: null, second: null},
+    'ㅖ': {lead: null, vowel: 8, tail: null, second: null},
+    'ㅗ': {lead: null, vowel: 9, tail: null, second: ['ㅏ', 'ㅐ', 'ㅣ']},
+    'ㅛ': {lead: null, vowel: 13, tail: null, second: null},
+    'ㅜ': {lead: null, vowel: 14, tail: null, second: ['ㅓ', 'ㅔ', 'ㅣ']},
+    'ㅠ': {lead: null, vowel: 18, tail: null, second: null},
+    'ㅡ': {lead: null, vowel: 19, tail: null, second: ['ㅣ']},
+    'ㅣ': {lead: null, vowel: 21, tail: null, second: null}
+  }
+
+  /**
+  * An object of objects for every jamo vowel that is made up of two keys.
+  * Each jamo has a vowel, which is the number associated with the Hangul algorithm,
+  * and combo, which is the sum of the two vowels numbers for the two jamo keys that make it up.
+  */
+  var VKI_KO_jamoDoubleVowels = {
+    'ㅘ': {vowel: 10, combo: 10, pair: ['ㅗ', 'ㅏ']},
+    'ㅙ': {vowel: 11, combo: 11, pair: ['ㅗ', 'ㅐ']},
+    'ㅚ': {vowel: 12, combo: 30, pair: ['ㅗ', 'ㅣ']},
+    'ㅝ': {vowel: 15, combo: 19, pair: ['ㅜ', 'ᅥ']},
+    'ㅞ': {vowel: 16, combo: 20, pair: ['ㅜ', 'ㅔ']},
+    'ㅟ': {vowel: 17, combo: 35, pair: ['ㅜ', 'ㅣ']},
+    'ㅢ': {vowel: 20, combo: 40, pair: ['ㅡ', 'ㅣ']}
+  }
+
+  /**
+  * An object of objects for every jamo tail that is made up of two keys.
+  * Each jamo has a tail, which is the number associated with the Hangul algorithm,
+  * and combo, which is the sum of the two tail numbers for the two jamo keys that make it up.
+  */
+  var VKI_KO_jamoDoubleTails = {
+    'ㄳ': {tail: 3, combo: 20, val: 3, pair: ['ㄱ', 'ㅅ']},
+    'ㄵ': {tail: 5, combo: 26, val: 5, pair: ['ㄴ', 'ᄌ']},
+    'ㄶ': {tail: 6, combo: 31, val: 6, pair: ['ㄴ', 'ㅎ']},
+    'ㄺ': {tail: 9, combo: 9, val: 9, pair: ['ㄹ', 'ㄱ']},
+    'ㄻ': {tail: 10, combo: 24, val: 10, pair: ['ㄹ', 'ㅁ']},
+    'ㄼ': {tail: 11, combo: 25, val: 11, pair: ['ㄹ', 'ㅂ']},
+    'ㄽ': {tail: 12, combo: 27, val: 12, pair: ['ㄹ', 'ㅅ']},
+    'ㄾ': {tail: 13, combo: 33, val: 13, pair: ['ㄹ', 'ㅌ']},
+    'ㄿ': {tail: 14, combo: 34, val: 14, pair: ['ㄹ', 'ㅍ']},
+    'ㅀ': {tail: 15, combo: 35, val: 15, pair: ['ㄹ','ㅎ']},
+    'ㅄ': {tail: 18, combo: 36, val: 18, pair: ['ㅂ', 'ㅅ']}
+  }
+
+  /**
+  * Function called when Hangul is done being created. Finishes current Hangul and starts next one.
+  * Clears VKI_KO_current since there's no input.
+  * @param {*} key: Unicode for first Jamo key in new Hangul input.
+  * @returns Output from VKI_KO_jamoKeyInput(): hangul unicode and bool.
+  */
+  function VKI_KO_end(key) {
+    VKI_KO_current = [];
+    return VKI_KO_jamoKeyInput(key);
+  }
+
+  /**
+  * Current Hangul (that had it's tail droped when called) and starts a new one with the vowel
+  * input and sets VKI_KO_current to this.
+  * @param {array} leadVowel the lead and tail (in that order)
+  * @returns Output from VKI_KO_jamoKeyInput(): hangul unicode and bool. (The hangul will be both the
+  * altered old hangul and the new hangul)
+  */
+  function VKI_KO_newLeadVowel(leadVowel) {
+    var old = VKI_KO_Hangul(VKI_KO_current);
+    VKI_KO_current = leadVowel;
+    VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
+    return [old+VKI_KO_display, false];
+  }
+
+  /**
+  * An algorithm that will find the Unicode for Hangul from the jamo given.
+  * @param {Number} lead number associated to the lead for the algorithm.
+  * @param {Number} vowel number associated to the vowel for the algorithm.
+  * @param {Number} tail number associated to the tail for the algorithm.
+  * @returns Unicode for Hangul from given parts
+  */
+  function VKI_KO_hangulAlgorithm(lead, vowel, tail) {
+    return String.fromCodePoint(tail + (vowel-1)*28 + (lead-1)*588 + 44032);
+  }
+
+  /**
+  * Finds the jamo vowel char or number for the Hangul algorithm that is made of two keys.
+  * @param {Number} sum sum of the two keys that make up the jamo
+  * @param {Boolean} jamoChar char if true, Hangul algorithm number if false
+  * @returns jamo unicode or int
+  */
+  function VKI_KO_findVowelPair(sum, jamoChar) {
+    for (jamoPair in VKI_KO_jamoDoubleVowels) {
+      if (VKI_KO_jamoDoubleVowels[jamoPair].combo == sum) {
+        if (jamoChar) {
+          return jamoPair;
+        }
+        else {
+          return VKI_KO_jamoDoubleVowels[jamoPair].vowel
+        }
+      }
+    }
+  }
+
+  /**
+  * Finds the jamo tail char or number for the Hangul algorithm that is made of two keys.
+  * @param {Number} sum sum of the two keys that make up the jamo
+  * @param {Boolean} jamoChar char if true, Hangul algorithm number if false
+  * @returns jamo unicode or int
+  */
+  function VKI_KO_findTailPair(sum, jamoChar) {
+    for (jamoPair in VKI_KO_jamoDoubleTails) {
+      if (VKI_KO_jamoDoubleTails[jamoPair].combo == sum) {
+        if (jamoChar) {
+          return jamoPair;
+        }
+        else {
+          return VKI_KO_jamoDoubleTails[jamoPair].tail
+        }
+      }
+    }
+  }
+
+  /**
+  * Finds the Hangul unicode char from the given list of jamo chars.
+  * Finds the values needed for hangulAlgorithm() and calls it.
+  * @param {Array} jamoString array of jamo
+  * @returns hangulAlgorithm output: Hangul Unicode
+  */
+  function VKI_KO_Hangul (jamoString) {
+    let v = null; //vowel
+      let t = null; //tail
+      if (jamoString.length == 1) return jamoString;
+    if (jamoString.length == 2) { //LV, VV, TT
+      if (VKI_KO_jamo[jamoString[0]].lead != null && VKI_KO_jamo[jamoString[1]].vowel != null) {
+        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, VKI_KO_jamo[jamoString[1]].vowel, 0);
+      }
+      else if (VKI_KO_jamo[jamoString[1]].tail != null && VKI_KO_jamo[jamoString[0]].tail != null) {
+        return (VKI_KO_findTailPair((VKI_KO_jamo[jamoString[0]].tail + VKI_KO_jamo[jamoString[1]].tail), true));
+      }
+      else if (VKI_KO_jamo[jamoString[0]].vowel != null && VKI_KO_jamo[jamoString[1]].vowel != null) {
+        return (VKI_KO_findVowelPair((VKI_KO_jamo[jamoString[0]].vowel + VKI_KO_jamo[jamoString[1]].vowel), true));
+      }
+    }
+    else if (jamoString.length == 3) { //LVT, LVV
+      if (VKI_KO_jamo[jamoString[2]].tail != null) {
+        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, VKI_KO_jamo[jamoString[1]].vowel, VKI_KO_jamo[jamoString[2]].tail);
+      }
+      else if (VKI_KO_jamo[jamoString[2]].vowel != null) {
+        v = VKI_KO_findVowelPair((VKI_KO_jamo[jamoString[1]].vowel + VKI_KO_jamo[jamoString[2]].vowel), false);
+        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, v, 0);
+      }
+    }
+    else if (jamoString.length == 4) { //LVVT, LVTT
+      if (VKI_KO_jamo[jamoString[2]].vowel != null) {
+        v = VKI_KO_findVowelPair((VKI_KO_jamo[jamoString[1]].vowel + VKI_KO_jamo[jamoString[2]].vowel), false);
+        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, v, VKI_KO_jamo[jamoString[3]].tail);
+      }
+      else {
+        t = VKI_KO_findTailPair((VKI_KO_jamo[jamoString[2]].tail + VKI_KO_jamo[jamoString[3]].tail), false);
+        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, VKI_KO_jamo[jamoString[1]].vowel, t);
+      }
+    }
+    else if (jamoString.length == 5){ //LVVTT
+      v = VKI_KO_findVowelPair((VKI_KO_jamo[jamoString[1]].vowel + VKI_KO_jamo[jamoString[2]].vowel), false);
+      t = VKI_KO_findTailPair((VKI_KO_jamo[jamoString[3]].tail + VKI_KO_jamo[jamoString[4]].tail), false);
+      return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, v, t);
+    }
+    return null;
+  }
+
+  /**
+  * Handles everytime one of the jamo keys is clicked and builds the list of jamo that will build the Hangul.
+  * Also return boolean for if the current Hangul needs deleted (it was altered).
+  * @param {string} key string of the jamo key clicked.
+  * @returns array of Hangul Unicode and boolean
+  */
+  function VKI_KO_jamoKeyInput(key) {
+    //first key in input
+    if (VKI_KO_current.length == 0) {
+      VKI_KO_current.push(key);
+      return [key, true];
+    }
+
+    //second key in input
+    else if (VKI_KO_current.length == 1) { //LV, VV, TT
+      if (VKI_KO_jamo[VKI_KO_current[0]].lead != null && VKI_KO_jamo[key].vowel != null) {
+        VKI_KO_current.push(key);
+        return [VKI_KO_Hangul(VKI_KO_current), false];
+      }
+      else if (VKI_KO_jamo[VKI_KO_current[0]].second != null) {
+        if (VKI_KO_jamo[VKI_KO_current[0]].second.includes(key)) {
+          VKI_KO_current.push(key);
+          VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
+          VKI_KO_current = [];
+          return [VKI_KO_display, false];
+        }
+      }
+      return VKI_KO_end(key);
+    }
+
+    //third key in input
+    else if (VKI_KO_current.length == 2) {
+      //curent has to be a lead and vowel to have anything else added.
+      if (VKI_KO_jamo[VKI_KO_current[0]].lead != null && VKI_KO_jamo[VKI_KO_current[1]].vowel != null) {
+        if (VKI_KO_jamo[key].tail != null) { //key is part of tail
+          VKI_KO_current.push(key);
+          return[VKI_KO_Hangul(VKI_KO_current), false];
+        }
+        else if (VKI_KO_jamo[VKI_KO_current[1]].second != null) { //key is second part of vowel, LVV
+          if (VKI_KO_jamo[VKI_KO_current[1]].second.includes(key)) {
+            VKI_KO_current.push(key);
+            VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
+            return [VKI_KO_display, false];
+          }
+          return VKI_KO_end(key);
+        }
+        else {
+          return VKI_KO_end(key);
+        }
+      }
+      else {
+        return VKI_KO_end(key);
+      }
+    }
+
+    //fourth input
+    //key has to be tail to be apart of VKI_KO_current Hangul
+    else if (VKI_KO_current.length == 3) { // LVVT
+      if (VKI_KO_jamo[key].vowel != null && VKI_KO_jamo[VKI_KO_current[2]].tail != null) { //next key is vowel(move tail)
+        return VKI_KO_newLeadVowel([VKI_KO_current.pop(), key]);
+      }
+      else if(VKI_KO_jamo[VKI_KO_current[2]].vowel != null && VKI_KO_jamo[key].vowel == null) {
+        VKI_KO_current.push(key);
+        return[VKI_KO_Hangul(VKI_KO_current), false];
+      }
+      else if (VKI_KO_jamo[VKI_KO_current[2]].second != null) { //LVTT
+        if (VKI_KO_jamo[VKI_KO_current[2]].second.includes(key)) {
+          VKI_KO_current.push(key);
+          VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
+          return [VKI_KO_display, false];
+        }
+      }
+      return VKI_KO_end(key);
+    }
+
+    //fifth input
+    //has to be second key in two part tail
+    else if (VKI_KO_current.length == 4) {
+      if (VKI_KO_jamo[key].vowel != null && VKI_KO_jamo[VKI_KO_current[3]].tail != null) { //next key is vowel(move tail)
+        return VKI_KO_newLeadVowel([VKI_KO_current.pop(), key]);
+      }
+      else if (VKI_KO_jamo[VKI_KO_current[3]].second != null) {
+        if (VKI_KO_jamo[VKI_KO_current[3]].second.includes(key)) {
+          VKI_KO_current.push(key);
+          VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
+          return [VKI_KO_display, false];
+        }
+      }
+      return VKI_KO_end(key);
+    }
+
+    //sixth input
+    //Start of new Hangul
+    else if (VKI_KO_current.length == 5) {
+      if (VKI_KO_jamo[key].vowel != null && VKI_KO_jamo[VKI_KO_current[4]].tail != null) { //next key is vowel(move tail)
+        return VKI_KO_newLeadVowel([VKI_KO_current.pop(), key]);
+      }
+      return VKI_KO_end(key);
+    }
+  }
+
+  /**
+  * Unicode for Hangul is given to find the jamo keys that make it up. It then sets curent to those parts.
+  * Makes it the curent Hangul being worked on.
+  * @param {*} Hangul Unicode of Hangul
+  */
+  function VKI_KO_GetHangulParts(Hangul) {
+    Hangul = Hangul.charCodeAt(); //convert unicode to decimal
+
+    //get tail, vowel, and lead values
+    var tail = Math.floor((Hangul - 44032)%28);
+    var vowel = Math.floor(1 + ((Hangul - 44032 - tail)%588)/28);
+    var lead = Math.floor(1 + (Hangul - 44032) / 588);
+
+    //Find unicode from values
+    for (const j in VKI_KO_jamo) {
+      if (VKI_KO_jamo[j].lead == lead) VKI_KO_current.push(j);
+      if (VKI_KO_jamo[j].vowel == vowel) vowel = j;
+      if (VKI_KO_jamo[j].tail == tail) tail = j;
+    }
+
+    //Find two parts of vowel
+    if (Number.isInteger(vowel)) {
+      for (const j in VKI_KO_jamoDoubleVowels) {
+        if (VKI_KO_jamoDoubleVowels[j].vowel == vowel) {
+          VKI_KO_current.push(VKI_KO_jamoDoubleVowels[j].pair[0]);
+          VKI_KO_current.push(VKI_KO_jamoDoubleVowels[j].pair[1]);
+        }
+      }
+    }
+    else {
+      VKI_KO_current.push(vowel);
+    }
+
+    //Find two parts of tail
+    if (Number.isInteger(tail)) {
+      for (const j in VKI_KO_jamoDoubleTails) {
+        if (VKI_KO_jamoDoubleTails[j].tail == tail) {
+          VKI_KO_current.push(VKI_KO_jamoDoubleTails[j].pair[0]);
+          VKI_KO_current.push(VKI_KO_jamoDoubleTails[j].pair[1]);
+        }
+      }
+    }
+    else {
+      VKI_KO_current.push(tail);
+    }
+  }
+
+  function VKI_KO_clearCurrent() {
+    VKI_KO_current = [];
+    if (self.VKI_kt == '\ud55c\uad6d\uc5b4') {
+        document.getElementById('completeBtn').textContent = '';
+    }
+  }
+
+  // Adds Korean specific event listeners for if the textbox is clicked or a physical key is pushed
+  function VKI_KO_addKEventListener(textbox) {
+    search = textbox;
+    textbox.addEventListener('click', kEvent, true);
+    textbox.addEventListener('keydown', kEvent, true);
+    kEventListeners = true;
+  }
+
+  // Removes Korean specific event listeners when the a keyboard is changed from Korean
+  function VKI_KO_removeKEventListeners() {
+    search.removeEventListener('click', kEvent, true);
+    search.removeEventListener('keydown', kEvent, true);
+    kEventListeners = false;
+  }
+
+  //***********************************************End for Korean input***********************************************//
 
 
   /* ***** Create keyboards ************************************** */
@@ -1685,7 +1700,7 @@ function clearCurrent() {
             numbkspspan.title = this.VKI_i18n['12'];
           VKI_addListener(numbkspspan, 'click', function() { self.VKI_backspace(); }, false);
           VKI_mouseEvents(numbkspspan);
-          thth.appendChild(numbkspspan);     
+          thth.appendChild(numbkspspan);
 
         let clrspan = document.createElement('span');
             clrspan.appendChild(document.createTextNode(this.VKI_i18n['07']));
@@ -1694,10 +1709,7 @@ function clearCurrent() {
             self.VKI_target.value = '';
             self.VKI_target.focus();
             //Clear Complete button when clear is pressed.
-            if (self.VKI_kt == '\ud55c\uad6d\uc5b4') {
-              document.getElementById('completeBtn').textContent = '';
-              current = [];
-            }
+            VKI_KO_clearCurrent();
             return false;
           }, false);
           VKI_mouseEvents(clrspan);
@@ -1902,8 +1914,7 @@ function clearCurrent() {
                       td.textContent = '';
                       VKI_addListener(td, 'click', function() {
                         self.VKI_target.focus();
-                        current = [];
-                        document.getElementById('completeBtn').textContent = ''; //clear text
+                        VKI_KO_clearCurrent();
                         self.VKI_target.setSelectionRange(self.VKI_target.selectionStart, self.VKI_target.selectionStart); //keeps cursor in place
                       }, false);
                       break;
@@ -1926,11 +1937,11 @@ function clearCurrent() {
     }
     //remove Korean event listeners if they exist
     if (kEventListeners) {
-      removeKEventListeners();
+      VKI_KO_removeKEventListeners();
     }
     //add Korean event listeners if Korean Layout being built
     if (this.VKI_target != false && this.VKI_kt == '\ud55c\uad6d\uc5b4') {
-      addKEventListener(this.VKI_target);
+      VKI_KO_addKEventListener(this.VKI_target);
     }
   };
 
@@ -2025,7 +2036,7 @@ function clearCurrent() {
         //For Korean
         //If input is a Jamo key
         if ((text.charCodeAt() >= 12593 && text.charCodeAt() <= 12643)) {
-          hangulOutput = jamoKeyInput(text); //Get the Hangul Unicode with new added Jamo
+          hangulOutput = VKI_KO_jamoKeyInput(text); //Get the Hangul Unicode with new added Jamo
           //Jamo was added to Hangul, need to remove previous one
           if (!hangulOutput[1]) {
               hangulEdit = true;
@@ -2045,10 +2056,9 @@ function clearCurrent() {
           }
           document.getElementById('completeBtn').textContent = hangulOutput[0];
         }
-        //non-Hangul/Jamo input resets current
+        //non-Hangul/Jamo input resets VKI_KO_current
         else if (!(text.charCodeAt() >= 44032 && text.charCodeAt() <= 55203)) {
-                current = [];
-                if (this.VKI_kt == '\ud55c\uad6d\uc5b4') document.getElementById('completeBtn').textContent = '';
+          VKI_KO_clearCurrent();
         }
         else if (text.charCodeAt() >= 44032 && text.charCodeAt() <= 55203) {
           document.getElementById('completeBtn').textContent = text;
@@ -2086,16 +2096,16 @@ function clearCurrent() {
       //If Hangul or non-lead Jamo is being removed
       if ((lastInput.charCodeAt() >= 12593 && lastInput.charCodeAt() <= 12643) || (lastInput.charCodeAt() >= 44032 && lastInput.charCodeAt() <= 55203)) { //check to see if the keyboard being used is Korean
         if (self.VKI_target.value.substr(0, rng[1]) != '') {
-          //Check if nothings in current, if not get the keys in the Hangul before cursor in current
-          if (current.length == 0) GetHangulParts(lastInput);
-          current.pop();
+          //Check if nothings in VKI_KO_current, if not get the keys in the Hangul before cursor in VKI_KO_current
+          if (VKI_KO_current.length == 0) VKI_KO_GetHangulParts(lastInput);
+          VKI_KO_current.pop();
           if (rng[0] < rng[1]) rng[0]++;
           self.VKI_target.value = self.VKI_target.value.substr(0, rng[0] - 1) + self.VKI_target.value.substr(rng[1]); //removes the char
           //replace the new Hangul with removed Jamo
           self.VKI_target.setSelectionRange(rng[0] - 1, rng[0] - 1); //keeps cursor inplace
-          if (current.length == 1) self.VKI_insert(current[0]);
-          if (current.length > 1) self.VKI_insert(Hangul(current));
-          if (current.length == 0) {
+          if (VKI_KO_current.length == 1) self.VKI_insert(VKI_KO_current[0]);
+          if (VKI_KO_current.length > 1) self.VKI_insert(VKI_KO_Hangul(VKI_KO_current));
+          if (VKI_KO_current.length == 0) {
           if (this.VKI_kt == '\ud55c\uad6d\uc5b4') document.getElementById('completeBtn').textContent = '';
           }
         }
@@ -2190,7 +2200,7 @@ function clearCurrent() {
     } else this.VKI_close();
     //add Korean specific event listeners if layout is Korean
     if(this.VKI_kt == '\ud55c\uad6d\uc5b4') {
-      addKEventListener(this.VKI_target);
+      VKI_KO_addKEventListener(this.VKI_target);
     }
   };
 
@@ -2247,10 +2257,7 @@ function clearCurrent() {
    */
   this.VKI_close = VKI_close = function() {
     if (this.VKI_target) {
-      if (self.VKI_kt == '\ud55c\uad6d\uc5b4') { //layout on Korean
-        current = [];
-        document.getElementById('completeBtn').textContent = '';
-      }
+      VKI_KO_clearCurrent();
       if (this.VKI_target.getAttribute('VKI_type') == 'password')
         this.VKI_target.readOnly = this.VKI_target.storeReadOnly;
       if (this.VKI_target.getAttribute('VKI_numpadInput') == 'true')
@@ -2269,7 +2276,7 @@ function clearCurrent() {
       } else this.VKI_target = false;
       //remove Korean specific event builders if they exist
       if (kEventListeners) {
-        removeKEventListeners();
+        VKI_KO_removeKEventListeners();
       }
     }
   };
@@ -2324,8 +2331,8 @@ function clearCurrent() {
 
   function VKI_getStyle(obj, styleProp) {
     let y;
-    if (obj.currentStyle) {
-      y = obj.currentStyle[styleProp];
+    if (obj.VKI_KO_currentStyle) {
+      y = obj.VKI_KO_currentStyle[styleProp];
     } else if (window.getComputedStyle)
       y = window.getComputedStyle(obj, null)[styleProp];
     return y;
@@ -2339,24 +2346,4 @@ function clearCurrent() {
   //   setTimeout(VKI_buildKeyboardInputs, 5);
   // }, false);
 
-  // Adds Korean specific event listeners for if the textbox is clicked or a physical key is pushed
-  function addKEventListener(textbox) {
-    search = textbox;
-    textbox.addEventListener('click', kEvent, true);
-    textbox.addEventListener('keydown', kEvent, true);
-    kEventListeners = true;
-  }
-
-  // Removes Korean specific event listeners when the a keyboard is changed from Korean
-  function removeKEventListeners() {
-    search.removeEventListener('click', kEvent, true);
-    search.removeEventListener('keydown', kEvent, true);
-    kEventListeners = false;
-  }
-
-  // For Korean, clears current and complete button
-  function kEvent() {
-    current = [];
-    document.getElementById('completeBtn').textContent = '';
-  }
 })();
