@@ -2333,8 +2333,8 @@ var VKI_attach, VKI_close;
 
   function VKI_getStyle(obj, styleProp) {
     let y;
-    if (obj.VKI_KO_currentStyle) {
-      y = obj.VKI_KO_currentStyle[styleProp];
+    if (obj.currentStyle) {
+      y = obj.currentStyle[styleProp];
     } else if (window.getComputedStyle)
       y = window.getComputedStyle(obj, null)[styleProp];
     return y;
