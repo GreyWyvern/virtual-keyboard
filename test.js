@@ -1607,7 +1607,6 @@ var VKI_attach, VKI_close;
             kbSelect.id = 'keyboardInputSelect';
             kbSelect.title = this.VKI_i18n['02'];
           VKI_addListener(kbSelect, 'click', function() {
-            VKI_KO_clearCurrent();
             let ol = this.getElementsByTagName('ol')[0];
             if (!ol.style.display) {
                 ol.style.display = 'block';
@@ -2036,7 +2035,7 @@ var VKI_attach, VKI_close;
         let rng = [this.VKI_target.selectionStart, this.VKI_target.selectionEnd];
         //For Korean
         //If input is a Jamo key
-        if (text.charCodeAt() >= 12593 && text.charCodeAt() <= 12643) {
+        if ((text.charCodeAt() >= 12593 && text.charCodeAt() <= 12643)) {
           hangulOutput = VKI_KO_jamoKeyInput(text); //Get the Hangul Unicode with new added Jamo
           //Jamo was added to Hangul, need to remove previous one
           if (!hangulOutput[1]) {
@@ -2095,7 +2094,7 @@ var VKI_attach, VKI_close;
       //For Korean
       let lastInput = self.VKI_target.value.substr(rng[0] - 1, rng[1]);
       //If Hangul or non-lead Jamo is being removed
-      if ((lastInput.charCodeAt() >= 12593 && lastInput.charCodeAt() <= 12643) || (lastInput.charCodeAt() >= 44032 && lastInput.charCodeAt() <= 55203) && this.VKI_kt == '\ud55c\uad6d\uc5b4') { //check to see if the keyboard being used is Korean
+      if ((lastInput.charCodeAt() >= 12593 && lastInput.charCodeAt() <= 12643) || (lastInput.charCodeAt() >= 44032 && lastInput.charCodeAt() <= 55203)) { //check to see if the keyboard being used is Korean
         if (self.VKI_target.value.substr(0, rng[1]) != '') {
           //Check if nothings in VKI_KO_current, if not get the keys in the Hangul before cursor in VKI_KO_current
           if (VKI_KO_current.length == 0) VKI_KO_GetHangulParts(lastInput);
