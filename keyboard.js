@@ -431,15 +431,15 @@ var VKI_attach, VKI_close;
   // Adds Korean specific event listeners for if the textbox is clicked or a physical key is pushed
   function VKI_KO_addKEventListener(textbox) {
     search = textbox;
-    textbox.addEventListener('click', kEvent, true);
-    textbox.addEventListener('keydown', kEvent, true);
+    textbox.addEventListener('click', VKI_KO_clearCurrent, true); //!! add events for when textbox is clicked.!!
+    textbox.addEventListener('keydown', VKI_KO_clearCurrent, true);
     kEventListeners = true;
   }
 
   // Removes Korean specific event listeners when the a keyboard is changed from Korean
   function VKI_KO_removeKEventListeners() {
-    search.removeEventListener('click', kEvent, true);
-    search.removeEventListener('keydown', kEvent, true);
+    search.removeEventListener('click', VKI_KO_clearCurrent, true);
+    search.removeEventListener('keydown', VKI_KO_clearCurrent, true);
     kEventListeners = false;
   }
 
