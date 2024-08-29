@@ -8,6 +8,7 @@
  * See https://greywyvern.com/code/javascript/keyboard/ for examples
  * and usage instructions.
  *
+ * Korean Jamo to Hangul input by VitaJane and Billy.
  * - https://github.com/GreyWyvern/virtual-keyboard/
  */
 var VKI_attach, VKI_close;
