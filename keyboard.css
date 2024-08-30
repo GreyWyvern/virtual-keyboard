@@ -252,7 +252,7 @@
 }
 
 #keyboardInputMaster #keyboardInputNumpadBksp,
-#keyboardInputMaster.numpadOnly #keyboardInputSelect,
+#keyboardInputMaster.numpadOnly ,
 #keyboardInputMaster.numpadOnly #keyboardInputNumpadToggle,
 #keyboardInputMaster.numpadOnly #keyboardInputKeyboard,
 #keyboardInputMaster.numpadOnly #keyboardInputNumpad td {

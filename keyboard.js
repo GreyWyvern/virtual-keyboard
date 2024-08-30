@@ -37,6 +37,7 @@ var VKI_attach, VKI_close;
   this.VKI_activeTab = 0;  // Tab moves to next: 1 = element, 2 = keyboard enabled element
   this.VKI_enterSubmit = true;  // Submit forms when Enter is pressed
   this.VKI_keyCenter = 3; // If this many or fewer keys in a row, center the row
+  this.VKI_EnglishNamesShown = false; //Include English names infront, helps with searching for a language
 
   // Do not touch these
   this.VKI_version = '1.53';
@@ -1604,55 +1605,45 @@ var VKI_attach, VKI_close;
       let thth = document.createElement('th');
           thth.colSpan = '2';
 
-        let kbSelect = document.createElement('div');
+        let kbSelect = document.createElement('select');
             kbSelect.id = 'keyboardInputSelect';
             kbSelect.title = this.VKI_i18n['02'];
-          VKI_addListener(kbSelect, 'click', function() {
-            VKI_KO_clearCurrent();
-            let ol = this.getElementsByTagName('ol')[0];
-            if (!ol.style.display) {
-                ol.style.display = 'block';
-              let li = ol.getElementsByTagName('li'), scr = 0;
-              for (let x = 0; x < li.length; x++) {
-                if (VKI_kt == li[x].firstChild.nodeValue) {
-                  li[x].classList.add('selected');
-                  scr = li[x].offsetTop - li[x].offsetHeight * 2;
-                } else li[x].classList.remove('selected');
-              } setTimeout(function() { ol.scrollTop = scr; }, 0);
-            } else ol.style.display = '';
-          }, false);
-            kbSelect.appendChild(document.createTextNode(this.VKI_kt));
-            kbSelect.appendChild(document.createTextNode(this.VKI_isIElt8 ? ' \u2193' : ' \u25be'));
-            kbSelect.langCount = 0;
-          let ol = document.createElement('ol');
-            for (ktype in this.VKI_layout) {
-              if (typeof this.VKI_layout[ktype] == 'object') {
-                if (!this.VKI_layout[ktype].lang) this.VKI_layout[ktype].lang = [];
-                for (let x = 0; x < this.VKI_layout[ktype].lang.length; x++)
-                  this.VKI_langCode[this.VKI_layout[ktype].lang[x].toLowerCase().replace(/-/g, '_')] = ktype;
-                let li = document.createElement('li');
-                    li.title = this.VKI_layout[ktype].name;
-                  VKI_addListener(li, 'click', function(e) {
-                    e = e || event;
-                    if (e.stopPropagation) { e.stopPropagation(); } else e.cancelBubble = true;
-                    this.parentNode.style.display = '';
-                    self.VKI_kts = self.VKI_kt = kbSelect.firstChild.nodeValue = this.firstChild.nodeValue;
-                    self.VKI_buildKeys();
-                    self.VKI_position(true);
-                  }, false);
-                  VKI_mouseEvents(li);
-                    li.appendChild(document.createTextNode(ktype));
-                  ol.appendChild(li);
-                kbSelect.langCount++;
+            let array = [];
+            for (lang in this.VKI_layout) {
+              if (this.VKI_EnglishNamesShown == true && this.VKI_layout[lang].name != lang) {
+                array.push(this.VKI_layout[lang].name + ': ' + lang);
+                console.log(this.VKI_layout[lang].name + ': ' + lang);
               }
-            } kbSelect.appendChild(ol);
-          if (kbSelect.langCount > 1) thth.appendChild(kbSelect);
-        this.VKI_langCode.index = [];
-        for (prop in this.VKI_langCode)
-          if (prop != 'index' && typeof this.VKI_langCode[prop] == 'string')
-            this.VKI_langCode.index.push(prop);
-        this.VKI_langCode.index.sort();
-        this.VKI_langCode.index.reverse();
+              else {
+                array.push(lang);
+                console.log(lang);
+              }
+            }
+            array.sort();
+            //load array in select box
+            for (var i = 0; i < array.length; i++) {
+              var option = document.createElement("option");
+              option.value = array[i];
+              option.text = array[i];
+              kbSelect.appendChild(option);
+            }
+          //Change layout
+          kbSelect.onchange = function(e) {
+            current = [];
+            e = e || event;
+            if (e.stopPropagation) { e.stopPropagation(); } else e.cancelBubble = true;
+            this.parentNode.style.display = '';
+            if (kbSelect.value.includes(': ')) {
+              self.VKI_kts = self.VKI_kt = kbSelect.value.split(': ')[1];
+            }
+            else {
+              self.VKI_kts = self.VKI_kt = kbSelect.value;
+            }
+            self.VKI_buildKeys();
+            self.VKI_target.focus();
+          };
+          kbSelect.value = this.VKI_kt;
+          thth.appendChild(kbSelect);
 
         if (this.VKI_numberPad) {
           let numtogspan = document.createElement('span');
@@ -2271,7 +2262,7 @@ var VKI_attach, VKI_close;
       if (this.VKI_kt != this.VKI_kts) {
         kbSelect.firstChild.nodeValue = this.VKI_kt = this.VKI_kts;
         this.VKI_buildKeys();
-      } kbSelect.getElementsByTagName('ol')[0].style.display = '';;
+      }
       this.VKI_target.focus();
       if (this.VKI_isIE) {
         setTimeout(function() { self.VKI_target = false; }, 0);
