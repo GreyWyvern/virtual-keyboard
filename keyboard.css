@@ -252,7 +252,7 @@
 }
 
 #keyboardInputMaster #keyboardInputNumpadBksp,
-#keyboardInputMaster.numpadOnly ,
+#keyboardInputMaster.numpadOnly #keyboardInputSelect,
 #keyboardInputMaster.numpadOnly #keyboardInputNumpadToggle,
 #keyboardInputMaster.numpadOnly #keyboardInputKeyboard,
 #keyboardInputMaster.numpadOnly #keyboardInputNumpad td {
@@ -281,4 +281,8 @@
   vertical-align:middle;
   cursor:pointer;
   max-height:1.3em;
+}
+
+#keyboardInputSelect {
+  float: left;
 }

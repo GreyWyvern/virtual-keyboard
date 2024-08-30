@@ -37,7 +37,7 @@ var VKI_attach, VKI_close;
   this.VKI_activeTab = 0;  // Tab moves to next: 1 = element, 2 = keyboard enabled element
   this.VKI_enterSubmit = true;  // Submit forms when Enter is pressed
   this.VKI_keyCenter = 3; // If this many or fewer keys in a row, center the row
-  this.VKI_EnglishNamesShown = false; //Include English names infront, helps with searching for a language
+  this.VKI_EnglishNamesShown = true; //Include English names infront, helps with searching for a language
 
   // Do not touch these
   this.VKI_version = '1.53';
@@ -1612,11 +1612,9 @@ var VKI_attach, VKI_close;
             for (lang in this.VKI_layout) {
               if (this.VKI_EnglishNamesShown == true && this.VKI_layout[lang].name != lang) {
                 array.push(this.VKI_layout[lang].name + ': ' + lang);
-                console.log(this.VKI_layout[lang].name + ': ' + lang);
               }
               else {
                 array.push(lang);
-                console.log(lang);
               }
             }
             array.sort();
