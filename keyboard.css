@@ -282,3 +282,7 @@
   cursor:pointer;
   max-height:1.3em;
 }
+
+#keyboardInputSelect {
+  float: left;
+}
