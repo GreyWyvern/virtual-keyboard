@@ -69,6 +69,7 @@ var VKI_attach, VKI_close;
     '11': 'Increase keyboard size',
     '12': 'Backspace',
     '13': 'Korean Complete Button',
+    '14': 'Move Keyboard'
   };
 
 
@@ -1703,6 +1704,33 @@ var VKI_attach, VKI_close;
           VKI_addListener(numbkspspan, 'click', function() { self.VKI_backspace(); }, false);
           VKI_mouseEvents(numbkspspan);
           thth.appendChild(numbkspspan);
+
+        //move osk
+        let moveOsk = document.createElement('span');
+            moveOsk.id = 'moveOsk';
+            moveOsk.appendChild(document.createTextNode('\u2725'));
+            moveOsk.title = this.VKI_i18n['14'];
+            moveOsk.addEventListener('mousedown', function(event) {
+                event.preventDefault();
+                cord = document.getElementById('keyboardInputMaster').getBoundingClientRect();
+                keyX = event.pageX - cord.left;
+                keyY = event.pageY - cord.top;
+                function moveAt(pageX, pageY) {
+                    this.VKI_keyboard.style.left = pageX - keyX + 'px';
+                    this.VKI_keyboard.style.top = pageY - keyY + 'px';
+                }
+                moveAt(event.pageX, event.pageY);
+                function onMouseMove(event) {
+                    moveAt(event.pageX, event.pageY);
+                }
+                document.addEventListener('mousemove', onMouseMove);
+                moveOsk.onmouseup = function() {
+                    moveOsk.onmouseup = null;
+                    document.removeEventListener('mousemove', onMouseMove);
+                };
+            });
+            VKI_mouseEvents(moveOsk);
+            thth.appendChild(moveOsk);
 
         let clrspan = document.createElement('span');
             clrspan.appendChild(document.createTextNode(this.VKI_i18n['07']));
