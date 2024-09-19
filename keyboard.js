@@ -1639,7 +1639,6 @@ var VKI_attach, VKI_close;
                     this.parentNode.style.display = '';
                     self.VKI_kts = self.VKI_kt = kbSelect.firstChild.nodeValue = this.firstChild.nodeValue;
                     self.VKI_buildKeys();
-                    self.VKI_position(true);
                   }, false);
                   VKI_mouseEvents(li);
                     li.appendChild(document.createTextNode(ktype));
