@@ -1670,7 +1670,6 @@ var VKI_attach, VKI_close;
         this.VKI_langCode.index.sort();
         this.VKI_langCode.index.reverse();
 
-        //Creates and controls '?' help button
         if (this.VKI_help) {
           let help = document.createElement('span');
               help.id = 'helpButton';

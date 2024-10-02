@@ -282,3 +282,99 @@
   cursor:pointer;
   max-height:1.3em;
 }
+
+/*Popup stuff*/
+#header {
+  padding-left:30em;
+  padding-bottom:0em;
+  padding-top:2em;
+  background-color:#999999;
+  white-space:nowrap;
+  -webkit-border-radius:0.6em 0.6em 0px 0px;
+  -moz-border-radius:0.6em 0.6em 0px 0px;
+  border-radius:0.6em 0.6em 0px 0px;
+}
+#popupcontrols {
+  padding:0.3em 0.3em 0.1em 0.3em;
+  white-space:nowrap;
+  text-align:right;
+  -webkit-border-radius:0.6em 0.6em 0px 0px;
+  -moz-border-radius:0.6em 0.6em 0px 0px;
+  border-radius:0.6em 0.6em 0px 0px;
+}
+#popupclose {
+  float: right;
+  padding:0px 0.4em;
+  height:1.3em;
+  line-height:1.2em;
+  border-top:1px solid #e5e5e5;
+  border-right:1px solid #5d5d5d;
+  border-bottom:1px solid #5d5d5d;
+  border-left:1px solid #e5e5e5;
+  background-color:#cccccc;
+  color: #000000;
+  cursor:pointer;
+  margin-top: -1.65em;
+  margin-right: 0.4em;
+  -webkit-border-radius:0.3em;
+  -moz-border-radius:0.3em;
+  border-radius:0.3em;
+  vertical-align:middle;
+  -webkit-transition:background-color .15s ease-in-out;
+  -o-transition:background-color .15s ease-in-out;
+  transition:background-color .15s ease-in-out;
+}
+
+#help {
+  float: left;
+  height:2em;
+  margin: -3em -29.5em;
+  -webkit-border-radius:0.3em;
+  -moz-border-radius:0.3em;
+  border-radius:0.3em;
+  vertical-align:middle;
+}
+
+#popupcontent {
+padding-top: 1.5em;
+padding-left: 2em;
+padding-right: 4em;
+padding-bottom: 1.5em;
+color: #000000;
+}
+
+#button {
+cursor: pointer;
+}
+
+ul {
+  list-style-type: none;
+}
+
+ul > li:before {
+  content: "-";
+  position: absolute;
+  margin-left: -1.1em; 
+}
+
+#helpDiv {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius:0.6em;
+  background-color:#999999;
+  border-top:1px solid #eeeeee;
+  border-right:1px solid #888888;
+  border-bottom:1px solid #444444;
+  border-left:1px solid #cccccc;
+  -webkit-box-shadow:0px 2px 10px #444444;
+  -moz-box-shadow:0px 2px 10px #444444;
+  box-shadow:0px 2px 10px #444444;
+  opacity:1;
+  filter:alpha(opacity=95);
+  background: #dddddd;
+  width: 40em;
+  margin-left: -250px; /*Half the value of width to center div*/
+  margin-top: -250px; /*Half the value of height to center div*/
+  z-index: 2000000;
+}
