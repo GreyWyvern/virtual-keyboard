@@ -20,6 +20,7 @@ var VKI_attach, VKI_close;
   let scrpath = new URL(script.src);
   let kEventListeners = false; //Bool for if Event listeners just for Korean exist
   let search = null; //For Korean
+  let helpDivOpen = false; //Don't close keyboard or help window when help window is open
 
   this.VKI_showVersion = true; // Display the version number
   this.VKI_deadBox = true; // Show the dead keys checkbox
@@ -38,6 +39,7 @@ var VKI_attach, VKI_close;
   this.VKI_enterSubmit = true;  // Submit forms when Enter is pressed
   this.VKI_keyCenter = 3; // If this many or fewer keys in a row, center the row
   this.VKI_movement = true; // Allow user to move keyboard
+  this.VKI_help = true; //Allow help to be shown
 
   // Do not touch these
   this.VKI_version = '1.53';
@@ -70,7 +72,8 @@ var VKI_attach, VKI_close;
     '11': 'Increase keyboard size',
     '12': 'Backspace',
     '13': 'Korean Complete Button',
-    '14': 'Move Keyboard'
+    '14': 'Move Keyboard',
+    '15': 'Help'
   };
 
 
@@ -1429,6 +1432,7 @@ var VKI_attach, VKI_close;
           keybut.title = self.VKI_i18n['01'];
           keybut.elem = elem;
           keybut.addEventListener('click', function(e) {
+            VKI_helpCheck();
             e = e || event;
             if (e.stopPropagation) { e.stopPropagation(); } else e.cancelBubble = true;
             self.VKI_show(this.elem);
@@ -1540,7 +1544,17 @@ var VKI_attach, VKI_close;
         if (ex.nodeName == 'TEXTAREA' || ex.type == 'text' || ex.type == 'number' || ex.type == 'password')
           if (ex.classList.contains('keyboardInput')) VKI_attach(ex);
 
-    VKI_addListener(document.documentElement, 'click', function(e) { self.VKI_close(); }, false);
+    VKI_addListener(document.documentElement, 'click', function(e) { 
+      if (helpDivOpen != true) {
+        self.VKI_close();
+      }
+      //If help window open and close button is clicked only close help
+      if (document.getElementById('helpDiv') != null && helpDivOpen != true) {
+        var helpDiv = document.getElementById('helpDiv');
+        helpDiv.parentElement.removeChild(helpDiv);
+      }
+      helpDivOpen = false;
+    }, false);
   }
 
 
@@ -1611,6 +1625,7 @@ var VKI_attach, VKI_close;
             kbSelect.title = this.VKI_i18n['02'];
           VKI_addListener(kbSelect, 'click', function() {
             VKI_KO_clearCurrent();
+            VKI_helpCheck();
             let ol = this.getElementsByTagName('ol')[0];
             if (!ol.style.display) {
                 ol.style.display = 'block';
@@ -1655,12 +1670,92 @@ var VKI_attach, VKI_close;
         this.VKI_langCode.index.sort();
         this.VKI_langCode.index.reverse();
 
+        //Creates and controls '?' help button
+        if (this.VKI_help) {
+          let help = document.createElement('span');
+              help.id = 'helpButton';
+              help.appendChild(document.createTextNode('?'));
+              help.title = this.VKI_i18n['15'];
+            VKI_addListener(help, 'click', function() {
+            if (document.getElementById('helpDiv') == null) {
+              helpOpen = true;
+              var helpDiv = document.createElement('DIV');
+              helpDiv.id='helpDiv';
+                var headerDiv = document.createElement('DIV');
+                headerDiv.id = 'header';
+                  var popupcontrolsDiv = document.createElement('DIV');
+                  popupcontrolsDiv.class = 'popupcontrols';
+                    var helpTitle = document.createElement('span');
+                    helpTitle.id = 'help';
+                    helpTitle.innerHTML = '<h2>Help</h2>';
+                    var xButton = document.createElement('span');
+                    xButton.id = 'popupclose';
+                    xButton.innerHTML = '<b>x</b>';
+                  popupcontrolsDiv.appendChild(helpTitle);
+                  popupcontrolsDiv.appendChild(xButton);
+                  //move help form
+                  headerDiv.addEventListener('mousedown', function(event) {
+                    if (!xButton.contains(event.target)) {
+                        event = event || window.event;
+                        event.preventDefault();
+                        mosX = event.clientX;
+                        mosY = event.clientY;
+
+                        document.onmouseup = function() {
+                            document.onmousemove = null;
+                            document.onmouseup = null;
+                        };
+
+                        document.onmousemove = function(event) {
+                            event = event || window.event;
+                            event.preventDefault();
+                            newX = mosX - event.clientX;
+                            newY = mosY - event.clientY;
+                            mosX = event.clientX;
+                            mosY = event.clientY;
+                            document.getElementById('helpDiv').style.top = (document.getElementById('helpDiv').offsetTop + 250 - newY) + 'px';
+                            document.getElementById('helpDiv').style.left = (document.getElementById('helpDiv').offsetLeft + 250 - newX) + 'px';
+                        };
+                    }
+                  });
+                headerDiv.appendChild(popupcontrolsDiv);
+              helpDiv.appendChild(headerDiv);
+                var contentDiv = document.createElement('DIV');
+                contentDiv.id = 'popupcontent';
+                contentDiv.innerHTML = "Some key helpful tips:<ul> <li>If you need to enlarge/shrink the keyboard you may simply click the <b>&#x21d1/&#x21d3</b> arrow near the top right of the Keyboard to adjust it to your preferred size.</li>    <li>If you need to use a number pad you can click on the <b>#</b> symbol, also on the top right of the Keyboard, clicking it again will hide the number pad.</li><li>Clicking and holding the <b>\u2725</b> button will allow you to move the keyboard around.</li><li>The <b>Alt</b> key will switch to additional characters on many of the layouts. For many keyboards that don't use the Latin alphabet, the Alt key will switch between the non-Latin and Latin layout.</li></ul>";
+                if (self.VKI_kt == '\ud55c\uad6d\uc5b4') {
+                  var KoreanHelp = document.createElement('DIV');
+                  KoreanHelp.id = 'Korean';
+                  KoreanHelp.innerHTML = "<div id='Korean'>For Korean:<ul><li>You can keep typing to start new Hangul if the next jamo is a vowel. It  will auto-remove the last jamo from the tail and make it the lead for the new one. For example: 걻 + ㅓ = 걸버 (if complete button isn't selected)</li> <li>The button next to the Alt button is used to complete Hangul. The current Hangul is shown on this button and clicking it will allow you start new Hangul. This can be helpful if you want to type just a vowel.</li> <li> Pressing any key on your physical keyboard, changing the layout, or entering any latin letters (from Alt) will complete the current Hangul.</li> <li>Pressing the Backspace key on your physical keyboard will remove the entire Hangul. Clicking the backspace key on the virtual keyboard will only remove the last Jamo in the Hangul and allow you to edit it.</li></ul></div>";
+                  contentDiv.appendChild(KoreanHelp);
+                }
+              helpDiv.appendChild(contentDiv);
+              document.body.appendChild(helpDiv);
+              xButton.onclick = function() {
+                helpDiv.parentElement.removeChild(helpDiv);
+                helpDivOpen = false;
+              }
+              VKI_addListener(helpDiv, 'click', function (e) {
+                helpDivOpen = true;
+              });
+            }
+            else {
+              var helpDiv = document.getElementById('helpDiv');
+              helpDiv.parentElement.removeChild(helpDiv);
+            }
+            self.VKI_target.focus();
+          }, false);
+          VKI_mouseEvents(help);
+          thth.appendChild(help);
+        }
+
         if (this.VKI_numberPad) {
           let numtogspan = document.createElement('span');
               numtogspan.id = 'keyboardInputNumpadToggle';
               numtogspan.appendChild(document.createTextNode('#'));
               numtogspan.title = this.VKI_i18n['00'];
             VKI_addListener(numtogspan, 'click', function() {
+              VKI_helpCheck();
               kbNumpad.style.display = (!kbNumpad.style.display) ? 'none' : '';
               kbNumpad.previousStyle = kbNumpad.style.display;
               self.VKI_position(true);
@@ -1680,6 +1775,7 @@ var VKI_attach, VKI_close;
           let small = document.createElement('small');
               small.title = this.VKI_i18n['10'];
             VKI_addListener(small, 'click', function() {
+              VKI_helpCheck();
               --self.VKI_size;
               self.VKI_kbsize();
             }, false);
@@ -1689,6 +1785,7 @@ var VKI_attach, VKI_close;
           let big = document.createElement('big');
               big.title = this.VKI_i18n['11'];
             VKI_addListener(big, 'click', function() {
+              VKI_helpCheck();
               ++self.VKI_size;
               self.VKI_kbsize();
             }, false);
@@ -1701,7 +1798,7 @@ var VKI_attach, VKI_close;
             numbkspspan.id = 'keyboardInputNumpadBksp';
             numbkspspan.appendChild(document.createTextNode('\u21E6'));
             numbkspspan.title = this.VKI_i18n['12'];
-          VKI_addListener(numbkspspan, 'click', function() { self.VKI_backspace(); }, false);
+          VKI_addListener(numbkspspan, 'click', function() { VKI_helpCheck(); self.VKI_backspace(); }, false);
           VKI_mouseEvents(numbkspspan);
           thth.appendChild(numbkspspan);
 
@@ -1751,6 +1848,7 @@ var VKI_attach, VKI_close;
             clrspan.appendChild(document.createTextNode(this.VKI_i18n['07']));
             clrspan.title = this.VKI_i18n['08'];
           VKI_addListener(clrspan, 'click', function() {
+            VKI_helpCheck();
             self.VKI_target.value = '';
             self.VKI_target.focus();
             //Clear Complete button when clear is pressed.
@@ -1784,6 +1882,7 @@ var VKI_attach, VKI_close;
                 checkbox.title = this.VKI_i18n['03'] + ': ' + ((this.VKI_deadkeysOn) ? this.VKI_i18n['04'] : this.VKI_i18n['05']);
                 checkbox.defaultChecked = this.VKI_deadkeysOn;
               VKI_addListener(checkbox, 'click', function() {
+                VKI_helpCheck();
                 this.title = self.VKI_i18n['03'] + ': ' + ((this.checked) ? self.VKI_i18n['04'] : self.VKI_i18n['05']);
                 self.VKI_modify('');
                 return true;
@@ -1844,6 +1943,7 @@ var VKI_attach, VKI_close;
    *
    */
   function VKI_keyClick() {
+    VKI_helpCheck();
     let done = false, character = '\xa0';
     if (this.firstChild.nodeName.toLowerCase() != 'small') {
       if ((character = this.firstChild.nodeValue) == '\xa0') return false;
@@ -1912,10 +2012,11 @@ var VKI_attach, VKI_close;
                 switch (lkey[1]) {
                   case 'Caps': case 'Shift':
                   case 'Alt': case 'AltGr': case 'AltLk':
-                    VKI_addListener(td, 'click', (function(type) { return function() { self.VKI_modify(type); return false; }})(lkey[1]), false);
+                    VKI_addListener(td, 'click', (function(type) { return function() { VKI_helpCheck(); self.VKI_modify(type); return false; }})(lkey[1]), false);
                     break;
                   case 'Tab':
                     VKI_addListener(td, 'click', function() {
+                      VKI_helpCheck();
                       if (self.VKI_activeTab) {
                         if (self.VKI_target.form) {
                           let target = self.VKI_target, elems = target.form.elements;
@@ -1937,10 +2038,11 @@ var VKI_attach, VKI_close;
                     break;
                   case 'Bksp':
                     td.title = this.VKI_i18n['12'];
-                    VKI_addListener(td, 'click', function() { self.VKI_backspace(); }, false);
+                    VKI_addListener(td, 'click', function() { VKI_helpCheck(); self.VKI_backspace(); }, false);
                     break;
                   case 'Enter':
                     VKI_addListener(td, 'click', function() {
+                      VKI_helpCheck();
                       if (self.VKI_target.nodeName != 'TEXTAREA') {
                         if (self.VKI_enterSubmit && self.VKI_target.form) {
                           for (let z = 0, subm = false; z < self.VKI_target.form.elements.length; z++)
@@ -1958,6 +2060,7 @@ var VKI_attach, VKI_close;
                       td.id = 'completeBtn';
                       td.textContent = '';
                       VKI_addListener(td, 'click', function() {
+                        VKI_helpCheck();
                         self.VKI_target.focus();
                         VKI_KO_clearCurrent();
                         self.VKI_target.setSelectionRange(self.VKI_target.selectionStart, self.VKI_target.selectionStart); //keeps cursor in place
@@ -2072,6 +2175,7 @@ var VKI_attach, VKI_close;
   this.VKI_insert = function(text) {
     this.VKI_target.dispatchEvent(new Event('beforeinput'));
     this.VKI_target.focus();
+    VKI_helpCheck();
     if (this.VKI_target.maxLength) this.VKI_target.maxlength = this.VKI_target.maxLength;
     if (typeof this.VKI_target.maxlength == 'undefined' ||
         this.VKI_target.maxlength < 0 ||
@@ -2302,6 +2406,7 @@ var VKI_attach, VKI_close;
    */
   this.VKI_close = VKI_close = function() {
     if (this.VKI_target) {
+      VKI_helpCheck();
       VKI_KO_clearCurrent();
       if (this.VKI_target.getAttribute('VKI_type') == 'password')
         this.VKI_target.readOnly = this.VKI_target.storeReadOnly;
@@ -2385,6 +2490,14 @@ var VKI_attach, VKI_close;
     } else if (window.getComputedStyle)
       y = window.getComputedStyle(obj, null)[styleProp];
     return y;
+  }
+
+  //Checks to see if the help window is open and closes it.
+  function VKI_helpCheck() {
+    if  (document.getElementById('helpDiv') != null) {
+      var helpDiv = document.getElementById('helpDiv');
+      helpDiv.parentElement.removeChild(helpDiv);
+    }
   }
 
   VKI_addListener(window, 'resize', this.VKI_position, false);
