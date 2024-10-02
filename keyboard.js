@@ -1704,7 +1704,6 @@ var VKI_attach, VKI_close;
           VKI_mouseEvents(numbkspspan);
           thth.appendChild(numbkspspan);
 
-        //move osk
         let moveOsk = document.createElement('span');
             moveOsk.id = 'moveOsk';
             moveOsk.appendChild(document.createTextNode('\u2725'));
