@@ -1713,11 +1713,11 @@ var VKI_attach, VKI_close;
             moveOsk.addEventListener('mousedown', function(event) {
                 event.preventDefault();
                 cord = document.getElementById('keyboardInputMaster').getBoundingClientRect();
-                keyX = event.pageX - cord.left;
-                keyY = event.pageY - cord.top;
+                keyX = event.pageX + VKI_scrollDist()[0] - cord.left;
+                keyY = event.pageY + VKI_scrollDist()[1] - cord.top;
                 function moveAt(pageX, pageY) {
-                    this.VKI_keyboard.style.left = pageX - keyX + 'px';
-                    this.VKI_keyboard.style.top = pageY - keyY + 'px';
+                    this.VKI_keyboard.style.left = pageX + VKI_scrollDist()[0] - keyX + VKI_scrollDist()[0] + 'px';
+                    this.VKI_keyboard.style.top = pageY + VKI_scrollDist()[1] - keyY + VKI_scrollDist()[1] + 'px';
                 }
                 moveAt(event.pageX, event.pageY);
                 function onMouseMove(event) {
