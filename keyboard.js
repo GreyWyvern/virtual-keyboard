@@ -37,6 +37,7 @@ var VKI_attach, VKI_close;
   this.VKI_activeTab = 0;  // Tab moves to next: 1 = element, 2 = keyboard enabled element
   this.VKI_enterSubmit = true;  // Submit forms when Enter is pressed
   this.VKI_keyCenter = 3; // If this many or fewer keys in a row, center the row
+  this.VKI_movement = true; // Allow user to move keyboard
 
   // Do not touch these
   this.VKI_version = '1.53';
@@ -1704,7 +1705,8 @@ var VKI_attach, VKI_close;
           VKI_mouseEvents(numbkspspan);
           thth.appendChild(numbkspspan);
 
-        let moveOsk = document.createElement('span');
+        if (this.VKI_movement) {
+          let moveOsk = document.createElement('span');
             moveOsk.id = 'moveOsk';
             moveOsk.appendChild(document.createTextNode('\u2725'));
             moveOsk.title = this.VKI_i18n['14'];
@@ -1729,6 +1731,7 @@ var VKI_attach, VKI_close;
             });
             VKI_mouseEvents(moveOsk);
             thth.appendChild(moveOsk);
+        }
 
         let clrspan = document.createElement('span');
             clrspan.appendChild(document.createTextNode(this.VKI_i18n['07']));
