@@ -1706,9 +1706,17 @@ var VKI_attach, VKI_close;
           thth.appendChild(numbkspspan);
 
         if (this.VKI_movement) {
+          let keyX = 0;
+          let keyY = 0;
           function moveAt(pageX, pageY) {
-            this.VKI_keyboard.style.left = pageX + VKI_scrollDist()[0] - keyX + VKI_scrollDist()[0] + 'px';
-            this.VKI_keyboard.style.top = pageY + VKI_scrollDist()[1] - keyY + VKI_scrollDist()[1] + 'px';
+            if (self.VKI_target.keyboardPosition == 'fixed') {
+              self.VKI_keyboard.style.left = pageX - keyX + 'px';
+              self.VKI_keyboard.style.top = pageY - keyY + 'px';
+            }
+            else {
+              self.VKI_keyboard.style.left = pageX + VKI_scrollDist()[0] - keyX + VKI_scrollDist()[0] + 'px';
+              self.VKI_keyboard.style.top = pageY + VKI_scrollDist()[1] - keyY + VKI_scrollDist()[1] + 'px';
+            }
           }
           function onMouseMove(event) {
             moveAt(event.pageX, event.pageY);
@@ -1723,10 +1731,15 @@ var VKI_attach, VKI_close;
             moveOsk.title = this.VKI_i18n['14'];
             moveOsk.addEventListener('mousedown', function(event) {
                 event.preventDefault();
-                cord = document.getElementById('keyboardInputMaster').getBoundingClientRect();
-                keyX = event.pageX + VKI_scrollDist()[0] - cord.left;
-                keyY = event.pageY + VKI_scrollDist()[1] - cord.top;
-                moveAt(event.pageX, event.pageY);
+                let cord = document.getElementById('keyboardInputMaster').getBoundingClientRect();
+                if (self.VKI_target.keyboardPosition == 'fixed') {
+                  keyX = event.pageX - cord.left;
+                  keyY = event.pageY - cord.top;
+                }
+                else {
+                  keyX = event.pageX + VKI_scrollDist()[0] - cord.left;
+                  keyY = event.pageY + VKI_scrollDist()[1] - cord.top;
+                }
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', mouseUp);
             });
