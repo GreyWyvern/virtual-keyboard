@@ -37,6 +37,7 @@ var VKI_attach, VKI_close;
   this.VKI_activeTab = 0;  // Tab moves to next: 1 = element, 2 = keyboard enabled element
   this.VKI_enterSubmit = true;  // Submit forms when Enter is pressed
   this.VKI_keyCenter = 3; // If this many or fewer keys in a row, center the row
+  this.VKI_movement = true; // Allow user to move keyboard
 
   // Do not touch these
   this.VKI_version = '1.53';
@@ -69,6 +70,7 @@ var VKI_attach, VKI_close;
     '11': 'Increase keyboard size',
     '12': 'Backspace',
     '13': 'Korean Complete Button',
+    '14': 'Move Keyboard'
   };
 
 
@@ -1638,7 +1640,6 @@ var VKI_attach, VKI_close;
                     this.parentNode.style.display = '';
                     self.VKI_kts = self.VKI_kt = kbSelect.firstChild.nodeValue = this.firstChild.nodeValue;
                     self.VKI_buildKeys();
-                    self.VKI_position(true);
                   }, false);
                   VKI_mouseEvents(li);
                     li.appendChild(document.createTextNode(ktype));
@@ -1703,6 +1704,48 @@ var VKI_attach, VKI_close;
           VKI_addListener(numbkspspan, 'click', function() { self.VKI_backspace(); }, false);
           VKI_mouseEvents(numbkspspan);
           thth.appendChild(numbkspspan);
+
+        if (this.VKI_movement) {
+          let keyX = 0;
+          let keyY = 0;
+          function moveAt(pageX, pageY) {
+            if (self.VKI_target.keyboardPosition == 'fixed') {
+              self.VKI_keyboard.style.left = pageX - keyX + 'px';
+              self.VKI_keyboard.style.top = pageY - keyY + 'px';
+            }
+            else {
+              self.VKI_keyboard.style.left = pageX + VKI_scrollDist()[0] - keyX + VKI_scrollDist()[0] + 'px';
+              self.VKI_keyboard.style.top = pageY + VKI_scrollDist()[1] - keyY + VKI_scrollDist()[1] + 'px';
+            }
+          }
+          function onMouseMove(event) {
+            moveAt(event.pageX, event.pageY);
+          }
+          function mouseUp() {
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', mouseUp);
+          }
+          let moveOsk = document.createElement('span');
+            moveOsk.id = 'moveOsk';
+            moveOsk.appendChild(document.createTextNode('\u2725'));
+            moveOsk.title = this.VKI_i18n['14'];
+            moveOsk.addEventListener('mousedown', function(event) {
+                event.preventDefault();
+                let cord = document.getElementById('keyboardInputMaster').getBoundingClientRect();
+                if (self.VKI_target.keyboardPosition == 'fixed') {
+                  keyX = event.pageX - cord.left;
+                  keyY = event.pageY - cord.top;
+                }
+                else {
+                  keyX = event.pageX + VKI_scrollDist()[0] - cord.left;
+                  keyY = event.pageY + VKI_scrollDist()[1] - cord.top;
+                }
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', mouseUp);
+            });
+            VKI_mouseEvents(moveOsk);
+            thth.appendChild(moveOsk);
+        }
 
         let clrspan = document.createElement('span');
             clrspan.appendChild(document.createTextNode(this.VKI_i18n['07']));
@@ -2279,6 +2322,10 @@ var VKI_attach, VKI_close;
       //remove Korean specific event builders if they exist
       if (kEventListeners) {
         VKI_KO_removeKEventListeners();
+      }
+      if (VKI_movement) {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', mouseUp);
       }
     }
   };
