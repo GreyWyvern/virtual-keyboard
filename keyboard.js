@@ -20,7 +20,7 @@ var VKI_attach, VKI_close;
   let scrpath = new URL(script.src);
   let kEventListeners = false; //Bool for if Event listeners just for Korean exist
   let search = null; //For Korean
-  let helpDivOpen = false; //Don't close keyboard or help window when help window is open
+  let helpDivOpen = false; //Tracks if help window is open
 
   this.VKI_showVersion = true; // Display the version number
   this.VKI_deadBox = true; // Show the dead keys checkbox
@@ -1692,7 +1692,6 @@ var VKI_attach, VKI_close;
                     xButton.innerHTML = '<b>x</b>';
                   popupcontrolsDiv.appendChild(helpTitle);
                   popupcontrolsDiv.appendChild(xButton);
-                  //move help form
                   headerDiv.addEventListener('mousedown', function(event) {
                     if (!xButton.contains(event.target)) {
                         event = event || window.event;
@@ -1721,11 +1720,18 @@ var VKI_attach, VKI_close;
               helpDiv.appendChild(headerDiv);
                 var contentDiv = document.createElement('DIV');
                 contentDiv.id = 'popupcontent';
-                contentDiv.innerHTML = "Some key helpful tips:<ul> <li>If you need to enlarge/shrink the keyboard you may simply click the <b>&#x21d1/&#x21d3</b> arrow near the top right of the Keyboard to adjust it to your preferred size.</li>    <li>If you need to use a number pad you can click on the <b>#</b> symbol, also on the top right of the Keyboard, clicking it again will hide the number pad.</li><li>Clicking and holding the <b>\u2725</b> button will allow you to move the keyboard around.</li><li>The <b>Alt</b> key will switch to additional characters on many of the layouts. For many keyboards that don't use the Latin alphabet, the Alt key will switch between the non-Latin and Latin layout.</li></ul>";
+                contentDiv.innerHTML = "<b>&#x21d1/&#x21d3</b>: Change keyboard size <br>\
+                  <b> #</b>: Open/close number pad <br>\
+                  <b>\u2725</b>: Move keyboard (click and drag) <br>\
+                  <b>Alt</b>: Switch to additional characters (Latin for alot of non-Latin layouts) <br><br>";
                 if (self.VKI_kt == '\ud55c\uad6d\uc5b4') {
                   var KoreanHelp = document.createElement('DIV');
                   KoreanHelp.id = 'Korean';
-                  KoreanHelp.innerHTML = "<div id='Korean'>For Korean:<ul><li>You can keep typing to start new Hangul if the next jamo is a vowel. It  will auto-remove the last jamo from the tail and make it the lead for the new one. For example: 걻 + ㅓ = 걸버 (if complete button isn't selected)</li> <li>The button next to the Alt button is used to complete Hangul. The current Hangul is shown on this button and clicking it will allow you start new Hangul. This can be helpful if you want to type just a vowel.</li> <li> Pressing any key on your physical keyboard, changing the layout, or entering any latin letters (from Alt) will complete the current Hangul.</li> <li>Pressing the Backspace key on your physical keyboard will remove the entire Hangul. Clicking the backspace key on the virtual keyboard will only remove the last Jamo in the Hangul and allow you to edit it.</li></ul></div>";
+                  KoreanHelp.innerHTML = "<div id='Korean'>For Korean:<ul>\
+                    <li>You can keep typing to start new Hangul if the next jamo is a vowel. It  will auto-remove the last jamo from the tail and make it the lead for the new one. For example: 걻 + ㅓ = 걸버 (if complete button isn't selected)</li> \
+                    <li>The button next to the Alt button is used to complete Hangul. The current Hangul is shown on this button and clicking it will allow you start new Hangul. This can be helpful if you want to type just a vowel.</li> \
+                    <li> Pressing any key on your physical keyboard, changing the layout, or entering any latin letters (from Alt) will complete the current Hangul.</li> \
+                    <li>Pressing the Backspace key on your physical keyboard will remove the entire Hangul. Clicking the backspace key on the virtual keyboard will only remove the last Jamo in the Hangul and allow you to edit it.</li></ul></div>";
                   contentDiv.appendChild(KoreanHelp);
                 }
               helpDiv.appendChild(contentDiv);
