@@ -5,6 +5,17 @@ HTML Virtual Keyboard Interface Script / User Javascript
 Full Changelog
 -----------------------------------------------------------------------
 
+Version 1.54 - November __, 2024
+  - Virtual keyboard no longer works on inputs marked as "readonly"
+  - Removed support for all versions of Internet Explorer
+  - Removed support for Opera versions <= 12
+  - Added Korean, Tajik and Uyghur keyboard layouts
+  - Added Korean Jamo to Hangul input algorithm (VitaJane and Billy)
+  - Add button allowing dragging of the keyboard; can be disabled
+    (VitaJane and Billy)
+  - Second click on Keyboard Layout Selector will swap keyboard titles
+    to their English names and sort on it
+
 Version 1.53 - December 27, 2022
   - Prevent showing mobile keyboard (if possible) when Virtual Keyboard
     is attached

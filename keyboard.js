@@ -1,6 +1,6 @@
 /**
- * Virtual Keyboard Interface - v1.53
- *   Copyright (c) 2023 - GreyWyvern
+ * Virtual Keyboard Interface - v1.54
+ *   Copyright (c) 2024 - GreyWyvern
  *
  * Add a script-driven keyboard interface to text fields, password
  * fields and textareas.
@@ -8,18 +8,14 @@
  * See https://greywyvern.com/code/javascript/keyboard/ for examples
  * and usage instructions.
  *
- * Korean Jamo to Hangul input by VitaJane and Billy.
+ * Korean Jamo to Hangul input algorithm by VitaJane and Billy.
+ *
  * - https://github.com/GreyWyvern/virtual-keyboard/
  */
 var VKI_attach, VKI_close;
 
 (function() {
   let self = this;
-
-  let script = document.currentScript || document.querySelector('script[src*="keyboard.js"]');
-  let scrpath = new URL(script.src);
-  let kEventListeners = false; //Bool for if Event listeners just for Korean exist
-  let search = null; //For Korean
 
   this.VKI_showVersion = true; // Display the version number
   this.VKI_deadBox = true; // Show the dead keys checkbox
@@ -37,26 +33,22 @@ var VKI_attach, VKI_close;
   this.VKI_activeTab = 0;  // Tab moves to next: 1 = element, 2 = keyboard enabled element
   this.VKI_enterSubmit = true;  // Submit forms when Enter is pressed
   this.VKI_keyCenter = 3; // If this many or fewer keys in a row, center the row
-  this.VKI_movement = true; // Allow user to move keyboard
+  this.VKI_move = true; // Allow user to move keyboard
 
   // Do not touch these
-  this.VKI_version = '1.53';
+  this.VKI_version = '1.54';
   this.VKI_target = false;
   this.VKI_shift = this.VKI_shiftlock = false;
   this.VKI_altgr = this.VKI_altgrlock = false;
   this.VKI_dead = false;
-  this.VKI_path = scrpath.pathname.replace(/\/[^\/]*$/, '/');
+  this.VKI_path = (new URL((document.currentScript ||
+    document.querySelector('script[src*="keyboard.js"]')
+  ).src)).pathname.replace(/\/[^\/]*$/, '/');
 
-  this.VKI_isIE = /*@cc_on!@*/false;
-  this.VKI_isIE6 = /*@if(@_jscript_version == 5.6)!@end@*/false;
-  this.VKI_isIElt8 = /*@if(@_jscript_version < 5.8)!@end@*/false;
-  this.VKI_isWebKit = RegExp('KHTML').test(navigator.userAgent);
-  this.VKI_isOpera = RegExp('Opera').test(navigator.userAgent);
-  this.VKI_isMoz = (!this.VKI_isWebKit && navigator.product == 'Gecko');
 
-  /* ***** i18n text strings ************************************* */
+  /* ***** i18n text strings *************************************** */
   this.VKI_i18n = {
-    '00': 'Display Number Pad',
+    '00': 'Display number pad',
     '01': 'Display virtual keyboard interface',
     '02': 'Select keyboard layout',
     '03': 'Dead keys',
@@ -69,387 +61,12 @@ var VKI_attach, VKI_close;
     '10': 'Decrease keyboard size',
     '11': 'Increase keyboard size',
     '12': 'Backspace',
-    '13': 'Korean Complete Button',
-    '14': 'Move Keyboard'
+    '13': 'Korean complete button',
+    '14': 'Move keyboard'
   };
 
 
-  /***********************************************For Korean input***********************************************/
-
-  let VKI_KO_current = []; //Array of Jamo in current Hangul
-  let VKI_KO_display = null; //Unicode for Hangul displayed on keyboard, based off what's in VKI_KO_current
-
-  /**
-  * Object of objects for each jamo key.
-  * Each key has a lead, vowel, and tail number that is null or the number associated with Hangul Unicode algorithm.
-  * Every key also has a second that is null or an array of keys that can be the second key in a two key jamo char
-  */
-  var VKI_KO_jamo = {
-    'ㄱ': {lead: 1, vowel: null, tail: 1, second: ['ㅅ']},
-    'ㄲ': {lead: 2, vowel: null, tail: 2, second: null},
-    'ㄴ': {lead: 3, vowel: null, tail: 4, second: ['ㅈ', 'ㅎ']},
-    'ㄷ': {lead: 4, vowel: null, tail: 7, second: null},
-    'ㄸ': {lead: 5, vowel: null, tail: null, second: null},
-    'ㄹ': {lead: 6, vowel: null, tail: 8, second: ['ㄱ', 'ㅁ', 'ㅂ', 'ㅅ', 'ㅌ', 'ㅍ', 'ㅎ']},
-    'ㅁ': {lead: 7, vowel: null, tail: 16, second: null},
-    'ㅂ': {lead: 8, vowel: null, tail: 17, second: ['ㅅ']},
-    'ㅃ': {lead: 9, vowel: null, tail: null, second: null},
-    'ㅅ': {lead: 10, vowel: null, tail: 19, second: null},
-    'ㅆ': {lead: 11, vowel: null, tail: 20, second: null},
-    'ㅇ': {lead: 12, vowel: null, tail: 21, second: null},
-    'ㅈ': {lead: 13, vowel: null, tail: 22, second: null},
-    'ㅉ': {lead: 14, vowel: null, tail: null, second: null},
-    'ㅊ': {lead: 15, vowel: null, tail: 23, second: null},
-    'ㅋ': {lead: 16, vowel: null, tail: 24, second: null},
-    'ㅌ': {lead: 17, vowel: null, tail: 25, second: null},
-    'ㅍ': {lead: 18, vowel: null, tail: 26, second: null},
-    'ㅎ': {lead: 19, vowel: null, tail: 27, second: null},
-    'ㅏ': {lead: null, vowel: 1, tail: null, second: null},
-    'ㅐ': {lead: null, vowel: 2, tail: null, second: null},
-    'ㅑ': {lead: null, vowel: 3, tail: null, second: null},
-    'ㅒ': {lead: null, vowel: 4, tail: null, second: null},
-    'ㅓ': {lead: null, vowel: 5, tail: null, second: null},
-    'ㅔ': {lead: null, vowel: 6, tail: null, second: null},
-    'ㅕ': {lead: null, vowel: 7, tail: null, second: null},
-    'ㅖ': {lead: null, vowel: 8, tail: null, second: null},
-    'ㅗ': {lead: null, vowel: 9, tail: null, second: ['ㅏ', 'ㅐ', 'ㅣ']},
-    'ㅛ': {lead: null, vowel: 13, tail: null, second: null},
-    'ㅜ': {lead: null, vowel: 14, tail: null, second: ['ㅓ', 'ㅔ', 'ㅣ']},
-    'ㅠ': {lead: null, vowel: 18, tail: null, second: null},
-    'ㅡ': {lead: null, vowel: 19, tail: null, second: ['ㅣ']},
-    'ㅣ': {lead: null, vowel: 21, tail: null, second: null}
-  }
-
-  /**
-  * An object of objects for every jamo vowel that is made up of two keys.
-  * Each jamo has a vowel, which is the number associated with the Hangul algorithm,
-  * and combo, which is the sum of the two vowels numbers for the two jamo keys that make it up.
-  */
-  var VKI_KO_jamoDoubleVowels = {
-    'ㅘ': {vowel: 10, combo: 10, pair: ['ㅗ', 'ㅏ']},
-    'ㅙ': {vowel: 11, combo: 11, pair: ['ㅗ', 'ㅐ']},
-    'ㅚ': {vowel: 12, combo: 30, pair: ['ㅗ', 'ㅣ']},
-    'ㅝ': {vowel: 15, combo: 19, pair: ['ㅜ', 'ᅥ']},
-    'ㅞ': {vowel: 16, combo: 20, pair: ['ㅜ', 'ㅔ']},
-    'ㅟ': {vowel: 17, combo: 35, pair: ['ㅜ', 'ㅣ']},
-    'ㅢ': {vowel: 20, combo: 40, pair: ['ㅡ', 'ㅣ']}
-  }
-
-  /**
-  * An object of objects for every jamo tail that is made up of two keys.
-  * Each jamo has a tail, which is the number associated with the Hangul algorithm,
-  * and combo, which is the sum of the two tail numbers for the two jamo keys that make it up.
-  */
-  var VKI_KO_jamoDoubleTails = {
-    'ㄳ': {tail: 3, combo: 20, val: 3, pair: ['ㄱ', 'ㅅ']},
-    'ㄵ': {tail: 5, combo: 26, val: 5, pair: ['ㄴ', 'ᄌ']},
-    'ㄶ': {tail: 6, combo: 31, val: 6, pair: ['ㄴ', 'ㅎ']},
-    'ㄺ': {tail: 9, combo: 9, val: 9, pair: ['ㄹ', 'ㄱ']},
-    'ㄻ': {tail: 10, combo: 24, val: 10, pair: ['ㄹ', 'ㅁ']},
-    'ㄼ': {tail: 11, combo: 25, val: 11, pair: ['ㄹ', 'ㅂ']},
-    'ㄽ': {tail: 12, combo: 27, val: 12, pair: ['ㄹ', 'ㅅ']},
-    'ㄾ': {tail: 13, combo: 33, val: 13, pair: ['ㄹ', 'ㅌ']},
-    'ㄿ': {tail: 14, combo: 34, val: 14, pair: ['ㄹ', 'ㅍ']},
-    'ㅀ': {tail: 15, combo: 35, val: 15, pair: ['ㄹ','ㅎ']},
-    'ㅄ': {tail: 18, combo: 36, val: 18, pair: ['ㅂ', 'ㅅ']}
-  }
-
-  /**
-  * Function called when Hangul is done being created. Finishes current Hangul and starts next one.
-  * Clears VKI_KO_current since there's no input.
-  * @param {*} key: Unicode for first Jamo key in new Hangul input.
-  * @returns Output from VKI_KO_jamoKeyInput(): hangul unicode and bool.
-  */
-  function VKI_KO_end(key) {
-    VKI_KO_current = [];
-    return VKI_KO_jamoKeyInput(key);
-  }
-
-  /**
-  * Current Hangul (that had it's tail droped when called) and starts a new one with the vowel
-  * input and sets VKI_KO_current to this.
-  * @param {array} leadVowel the lead and tail (in that order)
-  * @returns Output from VKI_KO_jamoKeyInput(): hangul unicode and bool. (The hangul will be both the
-  * altered old hangul and the new hangul)
-  */
-  function VKI_KO_newLeadVowel(leadVowel) {
-    var old = VKI_KO_Hangul(VKI_KO_current);
-    VKI_KO_current = leadVowel;
-    VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
-    return [old+VKI_KO_display, false];
-  }
-
-  /**
-  * An algorithm that will find the Unicode for Hangul from the jamo given.
-  * @param {Number} lead number associated to the lead for the algorithm.
-  * @param {Number} vowel number associated to the vowel for the algorithm.
-  * @param {Number} tail number associated to the tail for the algorithm.
-  * @returns Unicode for Hangul from given parts
-  */
-  function VKI_KO_hangulAlgorithm(lead, vowel, tail) {
-    return String.fromCodePoint(tail + (vowel-1)*28 + (lead-1)*588 + 44032);
-  }
-
-  /**
-  * Finds the jamo vowel char or number for the Hangul algorithm that is made of two keys.
-  * @param {Number} sum sum of the two keys that make up the jamo
-  * @param {Boolean} jamoChar char if true, Hangul algorithm number if false
-  * @returns jamo unicode or int
-  */
-  function VKI_KO_findVowelPair(sum, jamoChar) {
-    for (jamoPair in VKI_KO_jamoDoubleVowels) {
-      if (VKI_KO_jamoDoubleVowels[jamoPair].combo == sum) {
-        if (jamoChar) {
-          return jamoPair;
-        }
-        else {
-          return VKI_KO_jamoDoubleVowels[jamoPair].vowel
-        }
-      }
-    }
-  }
-
-  /**
-  * Finds the jamo tail char or number for the Hangul algorithm that is made of two keys.
-  * @param {Number} sum sum of the two keys that make up the jamo
-  * @param {Boolean} jamoChar char if true, Hangul algorithm number if false
-  * @returns jamo unicode or int
-  */
-  function VKI_KO_findTailPair(sum, jamoChar) {
-    for (jamoPair in VKI_KO_jamoDoubleTails) {
-      if (VKI_KO_jamoDoubleTails[jamoPair].combo == sum) {
-        if (jamoChar) {
-          return jamoPair;
-        }
-        else {
-          return VKI_KO_jamoDoubleTails[jamoPair].tail
-        }
-      }
-    }
-  }
-
-  /**
-  * Finds the Hangul unicode char from the given list of jamo chars.
-  * Finds the values needed for hangulAlgorithm() and calls it.
-  * @param {Array} jamoString array of jamo
-  * @returns hangulAlgorithm output: Hangul Unicode
-  */
-  function VKI_KO_Hangul (jamoString) {
-    let v = null; //vowel
-      let t = null; //tail
-      if (jamoString.length == 1) return jamoString;
-    if (jamoString.length == 2) { //LV, VV, TT
-      if (VKI_KO_jamo[jamoString[0]].lead != null && VKI_KO_jamo[jamoString[1]].vowel != null) {
-        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, VKI_KO_jamo[jamoString[1]].vowel, 0);
-      }
-      else if (VKI_KO_jamo[jamoString[1]].tail != null && VKI_KO_jamo[jamoString[0]].tail != null) {
-        return (VKI_KO_findTailPair((VKI_KO_jamo[jamoString[0]].tail + VKI_KO_jamo[jamoString[1]].tail), true));
-      }
-      else if (VKI_KO_jamo[jamoString[0]].vowel != null && VKI_KO_jamo[jamoString[1]].vowel != null) {
-        return (VKI_KO_findVowelPair((VKI_KO_jamo[jamoString[0]].vowel + VKI_KO_jamo[jamoString[1]].vowel), true));
-      }
-    }
-    else if (jamoString.length == 3) { //LVT, LVV
-      if (VKI_KO_jamo[jamoString[2]].tail != null) {
-        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, VKI_KO_jamo[jamoString[1]].vowel, VKI_KO_jamo[jamoString[2]].tail);
-      }
-      else if (VKI_KO_jamo[jamoString[2]].vowel != null) {
-        v = VKI_KO_findVowelPair((VKI_KO_jamo[jamoString[1]].vowel + VKI_KO_jamo[jamoString[2]].vowel), false);
-        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, v, 0);
-      }
-    }
-    else if (jamoString.length == 4) { //LVVT, LVTT
-      if (VKI_KO_jamo[jamoString[2]].vowel != null) {
-        v = VKI_KO_findVowelPair((VKI_KO_jamo[jamoString[1]].vowel + VKI_KO_jamo[jamoString[2]].vowel), false);
-        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, v, VKI_KO_jamo[jamoString[3]].tail);
-      }
-      else {
-        t = VKI_KO_findTailPair((VKI_KO_jamo[jamoString[2]].tail + VKI_KO_jamo[jamoString[3]].tail), false);
-        return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, VKI_KO_jamo[jamoString[1]].vowel, t);
-      }
-    }
-    else if (jamoString.length == 5){ //LVVTT
-      v = VKI_KO_findVowelPair((VKI_KO_jamo[jamoString[1]].vowel + VKI_KO_jamo[jamoString[2]].vowel), false);
-      t = VKI_KO_findTailPair((VKI_KO_jamo[jamoString[3]].tail + VKI_KO_jamo[jamoString[4]].tail), false);
-      return VKI_KO_hangulAlgorithm(VKI_KO_jamo[jamoString[0]].lead, v, t);
-    }
-    return null;
-  }
-
-  /**
-  * Handles everytime one of the jamo keys is clicked and builds the list of jamo that will build the Hangul.
-  * Also return boolean for if the current Hangul needs deleted (it was altered).
-  * @param {string} key string of the jamo key clicked.
-  * @returns array of Hangul Unicode and boolean
-  */
-  function VKI_KO_jamoKeyInput(key) {
-    //first key in input
-    if (VKI_KO_current.length == 0) {
-      VKI_KO_current.push(key);
-      return [key, true];
-    }
-
-    //second key in input
-    else if (VKI_KO_current.length == 1) { //LV, VV, TT
-      if (VKI_KO_jamo[VKI_KO_current[0]].lead != null && VKI_KO_jamo[key].vowel != null) {
-        VKI_KO_current.push(key);
-        return [VKI_KO_Hangul(VKI_KO_current), false];
-      }
-      else if (VKI_KO_jamo[VKI_KO_current[0]].second != null) {
-        if (VKI_KO_jamo[VKI_KO_current[0]].second.includes(key)) {
-          VKI_KO_current.push(key);
-          VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
-          VKI_KO_current = [];
-          return [VKI_KO_display, false];
-        }
-      }
-      return VKI_KO_end(key);
-    }
-
-    //third key in input
-    else if (VKI_KO_current.length == 2) {
-      //curent has to be a lead and vowel to have anything else added.
-      if (VKI_KO_jamo[VKI_KO_current[0]].lead != null && VKI_KO_jamo[VKI_KO_current[1]].vowel != null) {
-        if (VKI_KO_jamo[key].tail != null) { //key is part of tail
-          VKI_KO_current.push(key);
-          return[VKI_KO_Hangul(VKI_KO_current), false];
-        }
-        else if (VKI_KO_jamo[VKI_KO_current[1]].second != null) { //key is second part of vowel, LVV
-          if (VKI_KO_jamo[VKI_KO_current[1]].second.includes(key)) {
-            VKI_KO_current.push(key);
-            VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
-            return [VKI_KO_display, false];
-          }
-          return VKI_KO_end(key);
-        }
-        else {
-          return VKI_KO_end(key);
-        }
-      }
-      else {
-        return VKI_KO_end(key);
-      }
-    }
-
-    //fourth input
-    //key has to be tail to be apart of VKI_KO_current Hangul
-    else if (VKI_KO_current.length == 3) { // LVVT
-      if (VKI_KO_jamo[key].vowel != null && VKI_KO_jamo[VKI_KO_current[2]].tail != null) { //next key is vowel(move tail)
-        return VKI_KO_newLeadVowel([VKI_KO_current.pop(), key]);
-      }
-      else if(VKI_KO_jamo[VKI_KO_current[2]].vowel != null && VKI_KO_jamo[key].vowel == null) {
-        VKI_KO_current.push(key);
-        return[VKI_KO_Hangul(VKI_KO_current), false];
-      }
-      else if (VKI_KO_jamo[VKI_KO_current[2]].second != null) { //LVTT
-        if (VKI_KO_jamo[VKI_KO_current[2]].second.includes(key)) {
-          VKI_KO_current.push(key);
-          VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
-          return [VKI_KO_display, false];
-        }
-      }
-      return VKI_KO_end(key);
-    }
-
-    //fifth input
-    //has to be second key in two part tail
-    else if (VKI_KO_current.length == 4) {
-      if (VKI_KO_jamo[key].vowel != null && VKI_KO_jamo[VKI_KO_current[3]].tail != null) { //next key is vowel(move tail)
-        return VKI_KO_newLeadVowel([VKI_KO_current.pop(), key]);
-      }
-      else if (VKI_KO_jamo[VKI_KO_current[3]].second != null) {
-        if (VKI_KO_jamo[VKI_KO_current[3]].second.includes(key)) {
-          VKI_KO_current.push(key);
-          VKI_KO_display = VKI_KO_Hangul(VKI_KO_current);
-          return [VKI_KO_display, false];
-        }
-      }
-      return VKI_KO_end(key);
-    }
-
-    //sixth input
-    //Start of new Hangul
-    else if (VKI_KO_current.length == 5) {
-      if (VKI_KO_jamo[key].vowel != null && VKI_KO_jamo[VKI_KO_current[4]].tail != null) { //next key is vowel(move tail)
-        return VKI_KO_newLeadVowel([VKI_KO_current.pop(), key]);
-      }
-      return VKI_KO_end(key);
-    }
-  }
-
-  /**
-  * Unicode for Hangul is given to find the jamo keys that make it up. It then sets curent to those parts.
-  * Makes it the curent Hangul being worked on.
-  * @param {*} Hangul Unicode of Hangul
-  */
-  function VKI_KO_GetHangulParts(Hangul) {
-    Hangul = Hangul.charCodeAt(); //convert unicode to decimal
-
-    //get tail, vowel, and lead values
-    var tail = Math.floor((Hangul - 44032)%28);
-    var vowel = Math.floor(1 + ((Hangul - 44032 - tail)%588)/28);
-    var lead = Math.floor(1 + (Hangul - 44032) / 588);
-
-    //Find unicode from values
-    for (const j in VKI_KO_jamo) {
-      if (VKI_KO_jamo[j].lead == lead) VKI_KO_current.push(j);
-      if (VKI_KO_jamo[j].vowel == vowel) vowel = j;
-      if (VKI_KO_jamo[j].tail == tail) tail = j;
-    }
-
-    //Find two parts of vowel
-    if (Number.isInteger(vowel)) {
-      for (const j in VKI_KO_jamoDoubleVowels) {
-        if (VKI_KO_jamoDoubleVowels[j].vowel == vowel) {
-          VKI_KO_current.push(VKI_KO_jamoDoubleVowels[j].pair[0]);
-          VKI_KO_current.push(VKI_KO_jamoDoubleVowels[j].pair[1]);
-        }
-      }
-    }
-    else {
-      VKI_KO_current.push(vowel);
-    }
-
-    //Find two parts of tail
-    if (Number.isInteger(tail)) {
-      for (const j in VKI_KO_jamoDoubleTails) {
-        if (VKI_KO_jamoDoubleTails[j].tail == tail) {
-          VKI_KO_current.push(VKI_KO_jamoDoubleTails[j].pair[0]);
-          VKI_KO_current.push(VKI_KO_jamoDoubleTails[j].pair[1]);
-        }
-      }
-    }
-    else {
-      VKI_KO_current.push(tail);
-    }
-  }
-
-  function VKI_KO_clearCurrent() {
-    VKI_KO_current = [];
-    if (self.VKI_kt == '\ud55c\uad6d\uc5b4') {
-        document.getElementById('completeBtn').textContent = '';
-    }
-  }
-
-  // Adds Korean specific event listeners for if the textbox is clicked or a physical key is pushed
-  function VKI_KO_addKEventListener(textbox) {
-    search = textbox;
-    textbox.addEventListener('click', VKI_KO_clearCurrent, true); //!! add events for when textbox is clicked.!!
-    textbox.addEventListener('keydown', VKI_KO_clearCurrent, true);
-    kEventListeners = true;
-  }
-
-  // Removes Korean specific event listeners when the a keyboard is changed from Korean
-  function VKI_KO_removeKEventListeners() {
-    search.removeEventListener('click', VKI_KO_clearCurrent, true);
-    search.removeEventListener('keydown', VKI_KO_clearCurrent, true);
-    kEventListeners = false;
-  }
-
-  //***********************************************End for Korean input***********************************************//
-
-
-  /* ***** Create keyboards ************************************** */
+  /* ***** Create keyboards **************************************** */
   this.VKI_layout = {};
 
   // - Lay out each keyboard in rows of sub-arrays. Each sub-array
@@ -469,8 +86,8 @@ var VKI_attach, VKI_close;
   //
   // - If the second slot of a sub-array matches one of the following
   //   strings:
-  //     'Tab', 'Caps', 'Shift', 'Enter', 'Bksp',
-  //     'Alt' OR 'AltGr', 'AltLk'
+  //     'Tab', 'Caps', 'Shift', 'Enter', 'Bksp', 'Alt' OR 'AltGr',
+  //     'AltLk', 'Complete'
   //   then the function of the key will be the following,
   //   respectively:
   //     - Insert a tab
@@ -480,6 +97,7 @@ var VKI_attach, VKI_close;
   //     - Delete the previous character
   //     - Next entered character will be the alternate character
   //     - Toggle Alt/AltGr Lock
+  //     - Finish the currently displayed Korean Hangul character
   //
   //   The first slot of this sub-array will be the text to display
   //   on the corresponding key. This allows for easy localisation
@@ -599,6 +217,24 @@ var VKI_attach, VKI_close;
       [['Shift', 'Shift'], ['\u00AB', '\u00BB', '\u00B0'], ['z', 'Z'], ['x', 'X'], ['c', 'C'], ['v', 'V'], ['b', 'B'], ['n', 'N'], ['m', 'M', '\u00B5'], [',', '\'', '\u00AF'], ['.', '.', '\u00AD'], ['\u00E9', '\u00C9', '\u00B4'], ['Shift', 'Shift']],
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['fr-CA'] };
+
+  this.VKI_layout['\u4e2d\u6587\u6ce8\u97f3\u7b26\u53f7'] = {
+    'name': 'Chinese Bopomofo IME', 'keys': [
+      [['\u20AC', '~'], ['\u3105', '!'], ['\u3109', '@'], ['\u02C7', '#'], ['\u02CB', '$'], ['\u3113', '%'], ['\u02CA', '^'], ['\u02D9', '&'], ['\u311A', '*'], ['\u311E', ')'], ['\u3122', '('], ['\u3126', '_'], ['=', '+'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['\u3106', 'q'], ['\u310A', 'w'], ['\u310D', 'e'], ['\u3110', 'r'], ['\u3114', 't'], ['\u3117', 'y'], ['\u3127', 'u'], ['\u311B', 'i'], ['\u311F', 'o'], ['\u3123', 'p'], ['[', '{'], [']', '}'], ['\\', '|']],
+      [['Caps', 'Caps'], ['\u3107', 'a'], ['\u310B', 's'], ['\u310E', 'd'], ['\u3111', 'f'], ['\u3115', 'g'], ['\u3118', 'h'], ['\u3128', 'j'], ['\u311C', 'k'], ['\u3120', 'l'], ['\u3124', ':'], ['\'', '"'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['\u3108', 'z'], ['\u310C', 'x'], ['\u310F', 'c'], ['\u3112', 'v'], ['\u3116', 'b'], ['\u3119', 'n'], ['\u3129', 'm'], ['\u311D', '<'], ['\u3121', '>'], ['\u3125', '?'], ['Shift', 'Shift']],
+      [[' ', ' ']]
+    ], 'lang': ['zh-Bopo'] };
+
+  this.VKI_layout['\u4e2d\u6587\u4ed3\u9889\u8f93\u5165\u6cd5'] = {
+    'name': 'Chinese Cangjie IME', 'keys': [
+      [['\u20AC', '~'], ['1', '!'], ['2', '@'], ['3', '#'], ['4', '$'], ['5', '%'], ['6', '^'], ['7', '&'], ['8', '*'], ['9', ')'], ['0', '('], ['-', '_'], ['=', '+'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['\u624B', 'q'], ['\u7530', 'w'], ['\u6C34', 'e'], ['\u53E3', 'r'], ['\u5EFF', 't'], ['\u535C', 'y'], ['\u5C71', 'u'], ['\u6208', 'i'], ['\u4EBA', 'o'], ['\u5FC3', 'p'], ['[', '{'], [']', '}'], ['\\', '|']],
+      [['Caps', 'Caps'], ['\u65E5', 'a'], ['\u5C38', 's'], ['\u6728', 'd'], ['\u706B', 'f'], ['\u571F', 'g'], ['\u7AF9', 'h'], ['\u5341', 'j'], ['\u5927', 'k'], ['\u4E2D', 'l'], [';', ':'], ['\'', '"'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['\uFF3A', 'z'], ['\u96E3', 'x'], ['\u91D1', 'c'], ['\u5973', 'v'], ['\u6708', 'b'], ['\u5F13', 'n'], ['\u4E00', 'm'], [',', '<'], ['.', '>'], ['/', '?'], ['Shift', 'Shift']],
+      [[' ', ' ']]
+    ], 'lang': ['zh'] };
 
   this.VKI_layout['\u010cesky'] = {
     'name': 'Czech', 'keys': [
@@ -847,14 +483,14 @@ var VKI_attach, VKI_close;
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['kn'] };
 
-    this.VKI_layout['\ud55c\uad6d\uc5b4'] = {
-      'name': 'Korean', 'keys': [
-        [['`', '~', '`', '~'], ['1', '!', '1', '!'], ['2', '@', '2', '@'], ['3', '#', '3', '#'], ['4', '$', '4', '$'], ['5', '%', '5', '%'], ['6', '^', '6', '^'], ['7', '&', '7', '&'], ['8', '*', '8', '*'], ['9', ')', '9', ')'], ['0', '(', '0', '('], ['-', '_', '-', '_'], ['=', '+', '=', '+'], ['\u20A9', '|', '\u20A9', '|'], ['Bksp', 'Bksp']],
-        [['Tab', 'Tab'], ['\u3142', '\u3143', 'q', 'Q'], ['\u3148', '\u3149', 'w', 'W'], ['\u3137', '\u3138', 'e', 'E'], ['\u3131', '\u3132', 'r', 'R'], ['\u3145', '\u3146', 't', 'T'], ['\u315B', '', 'y', 'Y'], ['\u3155', '', 'u', 'U'], ['\u3151', '', 'i', 'I'], ['\u3150', '\u3152', 'o', 'O'], ['\u3154', '\u3156', 'p', 'P'], ['[', '{', '[', '{'], [']', '}', ']', '}']],
-        [['Caps', 'Caps'], ['\u3141', '', 'a', 'A'], ['\u3134', '', 's', 'S'], ['\u3147', '', 'd', 'D'], ['\u3139', '', 'f', 'F'], ['\u314E', '', 'g', 'G'], ['\u3157', '', 'h', 'H'], ['\u3153', '', 'j', 'J'], ['\u314F', '', 'k', 'K'], ['\u3163', '', 'l', 'L'], [';', ':', ';', ':'], ['\'', '"', '\'', '"'], ['Enter', 'Enter']],
-        [['Shift', 'Shift'], ['\u314B', '', 'z', 'Z'], ['\u314C', '', 'x', 'X'], ['\u314A', '', 'c', 'C'], ['\u314D', '', 'v', 'V'], ['\u3160', '', 'b', 'B'], ['\u315C', '', 'n', 'N'], ['\u3161', '', 'm', 'M'], [',', '<', ',', '<'], ['.', '>', '.', '>'], ['/', '?', '/', '?'], ['Shift', 'Shift']],
-        [[' ', ' ', ' ', ' '], ['Alt', 'Alt'], ['Complete', 'Complete']]
-      ], 'lang': ['ko'] };
+  this.VKI_layout['\ud55c\uad6d\uc5b4'] = {
+    'name': 'Korean', 'keys': [
+      [['`', '~', '`', '~'], ['1', '!', '1', '!'], ['2', '@', '2', '@'], ['3', '#', '3', '#'], ['4', '$', '4', '$'], ['5', '%', '5', '%'], ['6', '^', '6', '^'], ['7', '&', '7', '&'], ['8', '*', '8', '*'], ['9', ')', '9', ')'], ['0', '(', '0', '('], ['-', '_', '-', '_'], ['=', '+', '=', '+'], ['\u20A9', '|', '\u20A9', '|'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['\u3142', '\u3143', 'q', 'Q'], ['\u3148', '\u3149', 'w', 'W'], ['\u3137', '\u3138', 'e', 'E'], ['\u3131', '\u3132', 'r', 'R'], ['\u3145', '\u3146', 't', 'T'], ['\u315B', '', 'y', 'Y'], ['\u3155', '', 'u', 'U'], ['\u3151', '', 'i', 'I'], ['\u3150', '\u3152', 'o', 'O'], ['\u3154', '\u3156', 'p', 'P'], ['[', '{', '[', '{'], [']', '}', ']', '}']],
+      [['Caps', 'Caps'], ['\u3141', '', 'a', 'A'], ['\u3134', '', 's', 'S'], ['\u3147', '', 'd', 'D'], ['\u3139', '', 'f', 'F'], ['\u314E', '', 'g', 'G'], ['\u3157', '', 'h', 'H'], ['\u3153', '', 'j', 'J'], ['\u314F', '', 'k', 'K'], ['\u3163', '', 'l', 'L'], [';', ':', ';', ':'], ['\'', '"', '\'', '"'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['\u314B', '', 'z', 'Z'], ['\u314C', '', 'x', 'X'], ['\u314A', '', 'c', 'C'], ['\u314D', '', 'v', 'V'], ['\u3160', '', 'b', 'B'], ['\u315C', '', 'n', 'N'], ['\u3161', '', 'm', 'M'], [',', '<', ',', '<'], ['.', '>', '.', '>'], ['/', '?', '/', '?'], ['Shift', 'Shift']],
+      [[' ', ' ', ' ', ' '], ['Alt', 'Alt'], ['', 'Complete']]
+    ], 'lang': ['ko'] };
 
   this.VKI_layout['Kurd\u00ee'] = {
     'name': 'Kurdish', 'keys': [
@@ -1050,7 +686,7 @@ var VKI_attach, VKI_close;
     'name': 'Romanian', 'keys': [
       [['\u201E', '\u201D', '`', '~'], ['1', '!', '~'], ['2', '@', '\u02C7'], ['3', '#', '^'], ['4', '$', '\u02D8'], ['5', '%', '\u00B0'], ['6', '^', '\u02DB'], ['7', '&', '`'], ['8', '*', '\u02D9'], ['9', '(', '\u00B4'], ['0', ')', '\u02DD'], ['-', '_', '\u00A8'], ['=', '+', '\u00B8', '\u00B1'], ['Bksp', 'Bksp']],
       [['Tab', 'Tab'], ['q', 'Q'], ['w', 'W'], ['e', 'E', '\u20AC'], ['r', 'R'], ['t', 'T'], ['y', 'Y'], ['u', 'U'], ['i', 'I'], ['o', 'O'], ['p', 'P', '\u00A7'], ['\u0103', '\u0102', '[', '{'], ['\u00EE', '\u00CE', ']', '}'], ['\u00E2', '\u00C2', '\\', '|']],
-      [['Caps', 'Caps'], ['a', 'A'], ['s', 'S', '\u00df'], ['d', 'D', '\u00f0', '\u00D0'], ['f', 'F'], ['g', 'G'], ['h', 'H'], ['j', 'J'], ['k', 'K'], ['l', 'L', '\u0142', '\u0141'], [(this.VKI_isIElt8) ? '\u015F' : '\u0219', (this.VKI_isIElt8) ? '\u015E' : '\u0218', ';', ':'], [(this.VKI_isIElt8) ? '\u0163' : '\u021B', (this.VKI_isIElt8) ? '\u0162' : '\u021A', '\'', '"'], ['Enter', 'Enter']],
+      [['Caps', 'Caps'], ['a', 'A'], ['s', 'S', '\u00df'], ['d', 'D', '\u00f0', '\u00D0'], ['f', 'F'], ['g', 'G'], ['h', 'H'], ['j', 'J'], ['k', 'K'], ['l', 'L', '\u0142', '\u0141'], ['\u0219', '\u0218', ';', ':'], ['\u021B', '\u021A', '\'', '"'], ['Enter', 'Enter']],
       [['Shift', 'Shift'], ['\\', '|'], ['z', 'Z'], ['x', 'X'], ['c', 'C', '\u00A9'], ['v', 'V'], ['b', 'B'], ['n', 'N'], ['m', 'M'], [',', ';', '<', '\u00AB'], ['.', ':', '>', '\u00BB'], ['/', '?'], ['Shift', 'Shift']],
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['ro'] };
@@ -1144,6 +780,15 @@ var VKI_attach, VKI_close;
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['syc'] };
 
+  this.VKI_layout['\u0422\u043E\u04B7\u0438\u043A\u04e3'] = {
+    'name': 'Tajik', 'keys': [
+      [['\u0451', '\u0401', '`','~'], ['1', '!','1', '!'], ['2', '"','2', '@'], ['3', '\u2116','3', '#'], ['4', ';','4', '$'], ['5', '%','5', '%'], ['6', ':','6', '^'], ['7', '?','7', '&'], ['8', '*','8', '*'], ['9', '(','9', '{'], ['0', ')','0', '}'], ['\u0493', '\u0492','-', '_'], ['\u04EF', '\u04EE','=','+'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['\u0439', '\u0419','q', 'Q'], ['\u049B', '\u049A','w','W'], ['\u0443', '\u0423','e', 'E'], ['\u043A', '\u041A', 'r', 'R'], ['\u0435', '\u0415','t','T'], ['\u043D', '\u041D','y', 'Y'], ['\u0433', '\u0413','u','U'], ['\u0448', '\u0428','i','I'], ['\u04B3', '\u04B2','o','O'], ['\u0437', '\u0417','p','P'], ['\u0445', '\u0425','['], ['\u044A', '\u042A',']'], ['\\', '/', '|']],
+      [['Caps', 'Caps'], ['\u0444', '\u0424','a','A'], ['\u04B7', '\u04B6','s','S'], ['\u0432', '\u0412','d','D'], ['\u0430', '\u0410','f','F'], ['\u043F', '\u041F','g','G'], ['\u0440', '\u0420','h','H'], ['\u043E', '\u041E','j','J'], ['\u043B', '\u041B','k','K'], ['\u0434', '\u0414','l','L'], ['\u0436', '\u0416'], ['\u044D', '\u042D'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['\u044F', '\u042F','z','Z'], ['\u0447', '\u0427','x','X'], ['\u0441', '\u0421','c','C'], ['\u043C', '\u041C','v','V'], ['\u0438', '\u0418','b','B'], ['\u0442', '\u0422','n','N'], ['\u04E3', '\u04E2','m','M'], ['\u0431', '\u0411','<','>'], ['\u044E', '\u042E','?'], ['.', ','], ['Shift', 'Shift']],
+      [[' ', ' ', ' ', ' '], ['Alt', 'Alt']]
+    ], 'lang': ['tg'] };
+
   this.VKI_layout['\u0ba4\u0bae\u0bbf\u0bb4\u0bcd'] = {
     'name': 'Tamil', 'keys': [
       [['\u0BCA', '\u0B92'], ['1', '', '\u0BE7'], ['2', '', '\u0BE8'], ['3', '', '\u0BE9'], ['4', '', '\u0BEA'], ['5', '', '\u0BEB'], ['6', '\u0BA4\u0BCD\u0BB0', '\u0BEC'], ['7', '\u0B95\u0BCD\u0BB7', '\u0BED'], ['8', '\u0BB7\u0BCD\u0BB0', '\u0BEE'], ['9', '', '\u0BEF'], ['0', '', '\u0BF0'], ['-', '\u0B83', '\u0BF1'], ['', '', '\u0BF2'], ['Bksp', 'Bksp']],
@@ -1152,6 +797,15 @@ var VKI_attach, VKI_close;
       [['Shift', 'Shift'], ['\u0BC6', '\u0B8E'], [''], ['\u0BAE', '\u0BA3'], ['\u0BA8', '\u0BA9'], ['\u0BB5', '\u0BB4'], ['\u0BB2', '\u0BB3'], ['\u0BB8', '\u0BB7'], [',', '\u0BB7'], ['.', '\u0BB8\u0BCD\u0BB0\u0BC0'], ['\u0BAF', '\u0BAF'], ['Shift', 'Shift']],
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['ta'] };
+
+  this.VKI_layout['\u0422\u0430\u0442\u0430\u0440\u0447\u0430'] = {
+    'name': 'Tatar', 'keys': [
+      [['\u04BB', '\u04BA', '\u0451', '\u0401'], ['1', '!'], ['2', '"', '@'], ['3', '\u2116', '#'], ['4', ';', '$'], ['5', '%'], ['6', ':'], ['7', '?', '['], ['8', '*', ']'], ['9', '(', '{'], ['0', ')', '}'], ['-', '_'], ['=', '+'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['\u0439', '\u0419'], ['\u04E9', '\u04E8', '\u0446', '\u0426'], ['\u0443', '\u0423'], ['\u043A', '\u041A'], ['\u0435', '\u0415'], ['\u043D', '\u041D'], ['\u0433', '\u0413'], ['\u0448', '\u0428'], ['\u04D9', '\u04D8', '\u0449', '\u0429'], ['\u0437', '\u0417'], ['\u0445', '\u0425'], ['\u04AF', '\u04AE', '\u044A', '\u042A'], ['\\', '/']],
+      [['Caps', 'Caps'], ['\u0444', '\u0424'], ['\u044B', '\u042B'], ['\u0432', '\u0412'], ['\u0430', '\u0410'], ['\u043F', '\u041F'], ['\u0440', '\u0420'], ['\u043E', '\u041E'], ['\u043B', '\u041B'], ['\u0434', '\u0414'], ['\u04A3', '\u04A2', '\u0436', '\u0416'], ['\u044D', '\u042D', '\''], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['\u0491', '\u0490'], ['\u044F', '\u042F'], ['\u0447', '\u0427'], ['\u0441', '\u0421'], ['\u043C', '\u041C'], ['\u0438', '\u0418'], ['\u0442', '\u0422'], ['\u0497', '\u0496', '\u044C', '\u042C'], ['\u0431', '\u0411', '<'], ['\u044E', '\u042E', '>'], ['.', ','], ['Shift', 'Shift']],
+      [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
+    ], 'lang': ['tt'] };
 
   this.VKI_layout['\u0c24\u0c46\u0c32\u0c41\u0c17\u0c41'] = {
     'name': 'Telugu', 'keys': [
@@ -1188,15 +842,6 @@ var VKI_attach, VKI_close;
       [['Shift', 'Shift'], ['\u0E1A', '\u0E0E'], ['\u0E1B', '\u0E0F'], ['\u0E25', '\u0E10'], ['\u0E2B', '\u0E20'], ['\u0E34', '\u0E31'], ['\u0E04', '\u0E28'], ['\u0E2A', '\u0E2E'], ['\u0E30', '\u0E1F'], ['\u0E08', '\u0E09'], ['\u0E1E', '\u0E2C'], ['Shift', 'Shift']],
       [[' ', ' ']]
     ]};
-
-  this.VKI_layout['\u0422\u0430\u0442\u0430\u0440\u0447\u0430'] = {
-    'name': 'Tatar', 'keys': [
-      [['\u04BB', '\u04BA', '\u0451', '\u0401'], ['1', '!'], ['2', '"', '@'], ['3', '\u2116', '#'], ['4', ';', '$'], ['5', '%'], ['6', ':'], ['7', '?', '['], ['8', '*', ']'], ['9', '(', '{'], ['0', ')', '}'], ['-', '_'], ['=', '+'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['\u0439', '\u0419'], ['\u04E9', '\u04E8', '\u0446', '\u0426'], ['\u0443', '\u0423'], ['\u043A', '\u041A'], ['\u0435', '\u0415'], ['\u043D', '\u041D'], ['\u0433', '\u0413'], ['\u0448', '\u0428'], ['\u04D9', '\u04D8', '\u0449', '\u0429'], ['\u0437', '\u0417'], ['\u0445', '\u0425'], ['\u04AF', '\u04AE', '\u044A', '\u042A'], ['\\', '/']],
-      [['Caps', 'Caps'], ['\u0444', '\u0424'], ['\u044B', '\u042B'], ['\u0432', '\u0412'], ['\u0430', '\u0410'], ['\u043F', '\u041F'], ['\u0440', '\u0420'], ['\u043E', '\u041E'], ['\u043B', '\u041B'], ['\u0434', '\u0414'], ['\u04A3', '\u04A2', '\u0436', '\u0416'], ['\u044D', '\u042D', '\''], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['\u0491', '\u0490'], ['\u044F', '\u042F'], ['\u0447', '\u0427'], ['\u0441', '\u0421'], ['\u043C', '\u041C'], ['\u0438', '\u0418'], ['\u0442', '\u0422'], ['\u0497', '\u0496', '\u044C', '\u042C'], ['\u0431', '\u0411', '<'], ['\u044E', '\u042E', '>'], ['.', ','], ['Shift', 'Shift']],
-      [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
-    ], 'lang': ['tt'] };
 
   this.VKI_layout['T\u00fcrk\u00e7e F'] = {
     'name': 'Turkish F', 'keys': [
@@ -1270,6 +915,15 @@ var VKI_attach, VKI_close;
       [[' ', ' ', ' ', ' '], ['Alt', 'Alt']]
     ], 'lang': ['en'] };
 
+  this.VKI_layout['\u0626\u06c7\u064a\u063a\u06c7\u0631'] = {
+    'name': 'Uyghur', 'keys': [
+      [['`', '~'], ['1', '!'], ['2', '@'], ['3', '#'], ['4', '$'], ['5', '%'], ['6', '^'], ['7', '&'], ['8', '*'], ['9', ')'], ['0', '('], ['-', '_'], ['=', '+'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['\u0686'], ['\u06CB'], ['\u06D0'], ['\u0631'], ['\u062A'], ['\u064A'], ['\u06C7'], ['\u06AD'], ['\u0648'], ['\u067E'], [']', '\u00BB'], ['[', '\u00AB'], ['\\', '|']],
+      [['Caps', 'Caps'], ['\u06BE'], ['\u0633'], ['\u062F', '\u0698'], ['\u0627', '\u0641'], ['\u06D5', '\u06AF'], ['\u0649', '\u062E'], ['\u0642', '\u062C'], ['\u0643', '\u06C6'], ['\u0644', '\u0644\u0627'], ['\u061B', '\u003A'], ['\'', '"'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['', ''], ['\u0632'], ['\u0634'], ['\u063A'], ['\u06C8'], ['\u0628'], ['\u0646'], ['\u0645'], ['\u060C', '>'], ['\u002E', '<'], ['\u0626', '\u061F'], ['Shift', 'Shift']],
+      [[' ', ' ']]
+    ], 'lang': ['ug'] };
+
   this.VKI_layout['\u040e\u0437\u0431\u0435\u043a\u0447\u0430'] = {
     'name': 'Uzbek Cyrillic', 'keys': [
       [['\u0451', '\u0401'], ['1', '!'], ['2', '"'], ['3', '\u2116'], ['4', ';'], ['5', '%'], ['6', ':'], ['7', '?'], ['8', '*'], ['9', '('], ['0', ')'], ['\u0493', '\u0492'], ['\u04B3', '\u04B2'], ['Bksp', 'Bksp']],
@@ -1297,43 +951,8 @@ var VKI_attach, VKI_close;
       [[' ', ' ', ' ', ' '], ['Alt', 'Alt']]
     ], 'lang': ['yi'] };
 
-  this.VKI_layout['\u4e2d\u6587\u6ce8\u97f3\u7b26\u53f7'] = {
-    'name': 'Chinese Bopomofo IME', 'keys': [
-      [['\u20AC', '~'], ['\u3105', '!'], ['\u3109', '@'], ['\u02C7', '#'], ['\u02CB', '$'], ['\u3113', '%'], ['\u02CA', '^'], ['\u02D9', '&'], ['\u311A', '*'], ['\u311E', ')'], ['\u3122', '('], ['\u3126', '_'], ['=', '+'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['\u3106', 'q'], ['\u310A', 'w'], ['\u310D', 'e'], ['\u3110', 'r'], ['\u3114', 't'], ['\u3117', 'y'], ['\u3127', 'u'], ['\u311B', 'i'], ['\u311F', 'o'], ['\u3123', 'p'], ['[', '{'], [']', '}'], ['\\', '|']],
-      [['Caps', 'Caps'], ['\u3107', 'a'], ['\u310B', 's'], ['\u310E', 'd'], ['\u3111', 'f'], ['\u3115', 'g'], ['\u3118', 'h'], ['\u3128', 'j'], ['\u311C', 'k'], ['\u3120', 'l'], ['\u3124', ':'], ['\'', '"'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['\u3108', 'z'], ['\u310C', 'x'], ['\u310F', 'c'], ['\u3112', 'v'], ['\u3116', 'b'], ['\u3119', 'n'], ['\u3129', 'm'], ['\u311D', '<'], ['\u3121', '>'], ['\u3125', '?'], ['Shift', 'Shift']],
-      [[' ', ' ']]
-    ], 'lang': ['zh-Bopo'] };
 
-  this.VKI_layout['\u4e2d\u6587\u4ed3\u9889\u8f93\u5165\u6cd5'] = {
-    'name': 'Chinese Cangjie IME', 'keys': [
-      [['\u20AC', '~'], ['1', '!'], ['2', '@'], ['3', '#'], ['4', '$'], ['5', '%'], ['6', '^'], ['7', '&'], ['8', '*'], ['9', ')'], ['0', '('], ['-', '_'], ['=', '+'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['\u624B', 'q'], ['\u7530', 'w'], ['\u6C34', 'e'], ['\u53E3', 'r'], ['\u5EFF', 't'], ['\u535C', 'y'], ['\u5C71', 'u'], ['\u6208', 'i'], ['\u4EBA', 'o'], ['\u5FC3', 'p'], ['[', '{'], [']', '}'], ['\\', '|']],
-      [['Caps', 'Caps'], ['\u65E5', 'a'], ['\u5C38', 's'], ['\u6728', 'd'], ['\u706B', 'f'], ['\u571F', 'g'], ['\u7AF9', 'h'], ['\u5341', 'j'], ['\u5927', 'k'], ['\u4E2D', 'l'], [';', ':'], ['\'', '"'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['\uFF3A', 'z'], ['\u96E3', 'x'], ['\u91D1', 'c'], ['\u5973', 'v'], ['\u6708', 'b'], ['\u5F13', 'n'], ['\u4E00', 'm'], [',', '<'], ['.', '>'], ['/', '?'], ['Shift', 'Shift']],
-      [[' ', ' ']]
-    ], 'lang': ['zh'] };
-
-  this.VKI_layout['\u0422\u043E\u04B7\u0438\u043A\u04e3'] = {
-    'name': 'Tajik', 'keys': [
-      [['\u0451', '\u0401', '`','~'], ['1', '!','1', '!'], ['2', '"','2', '@'], ['3', '\u2116','3', '#'], ['4', ';','4', '$'], ['5', '%','5', '%'], ['6', ':','6', '^'], ['7', '?','7', '&'], ['8', '*','8', '*'], ['9', '(','9', '{'], ['0', ')','0', '}'], ['\u0493', '\u0492','-', '_'], ['\u04EF', '\u04EE','=','+'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['\u0439', '\u0419','q', 'Q'], ['\u049B', '\u049A','w','W'], ['\u0443', '\u0423','e', 'E'], ['\u043A', '\u041A', 'r', 'R'], ['\u0435', '\u0415','t','T'], ['\u043D', '\u041D','y', 'Y'], ['\u0433', '\u0413','u','U'], ['\u0448', '\u0428','i','I'], ['\u04B3', '\u04B2','o','O'], ['\u0437', '\u0417','p','P'], ['\u0445', '\u0425','['], ['\u044A', '\u042A',']'], ['\\', '/', '|']],
-      [['Caps', 'Caps'], ['\u0444', '\u0424','a','A'], ['\u04B7', '\u04B6','s','S'], ['\u0432', '\u0412','d','D'], ['\u0430', '\u0410','f','F'], ['\u043F', '\u041F','g','G'], ['\u0440', '\u0420','h','H'], ['\u043E', '\u041E','j','J'], ['\u043B', '\u041B','k','K'], ['\u0434', '\u0414','l','L'], ['\u0436', '\u0416'], ['\u044D', '\u042D'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['\u044F', '\u042F','z','Z'], ['\u0447', '\u0427','x','X'], ['\u0441', '\u0421','c','C'], ['\u043C', '\u041C','v','V'], ['\u0438', '\u0418','b','B'], ['\u0442', '\u0422','n','N'], ['\u04E3', '\u04E2','m','M'], ['\u0431', '\u0411','<','>'], ['\u044E', '\u042E','?'], ['.', ','], ['Shift', 'Shift']],
-      [[' ', ' ', ' ', ' '], ['Alt', 'Alt']]
-    ], 'lang': ['tg'] };
-
-  this.VKI_layout['ئۇيغۇر'] = {
-    'name': 'Uyghur', 'keys': [
-      [['`', '~'], ['1', '!'], ['2', '@'], ['3', '#'], ['4', '$'], ['5', '%'], ['6', '^'], ['7', '&'], ['8', '*'], ['9', ')'], ['0', '('], ['-', '_'], ['=', '+'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['\u0686'], ['\u06CB'], ['\u06D0'], ['\u0631'], ['\u062A'], ['\u064A'], ['\u06C7'], ['\u06AD'], ['\u0648'], ['\u067E'], [']', '\u00BB'], ['[', '\u00AB'], ['\\', '|']],
-      [['Caps', 'Caps'], ['\u06BE'], ['\u0633'], ['\u062F', '\u0698'], ['\u0627', '\u0641'], ['\u06D5', '\u06AF'], ['\u0649', '\u062E'], ['\u0642', '\u062C'], ['\u0643', '\u06C6'], ['\u0644', '\u0644\u0627'], ['\u061B', '\u003A'], ['\'', '"'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['', ''], ['\u0632'], ['\u0634'], ['\u063A'], ['\u06C8'], ['\u0628'], ['\u0646'], ['\u0645'], ['\u060C', '>'], ['\u002E', '<'], ['\u0626', '\u061F'], ['Shift', 'Shift']],
-      [[' ', ' ']]
-    ], 'lang': ['ug'] };
-
-  /* ***** Define Dead Keys ************************************** */
+  /* ***** Define Dead Keys **************************************** */
   this.VKI_deadkey = {};
 
   // - Lay out each dead key set as an object of property/value
@@ -1407,8 +1026,8 @@ var VKI_attach, VKI_close;
     'C': '\u00c7', 'S': '\u015E'
   };
   this.VKI_deadkey[','] = { // Comma
-    's': (this.VKI_isIElt8) ? '\u015F' : '\u0219', 't': (this.VKI_isIElt8) ? '\u0163' : '\u021B',
-    'S': (this.VKI_isIElt8) ? '\u015E' : '\u0218', 'T': (this.VKI_isIElt8) ? '\u0162' : '\u021A'
+    's': '\u0219', 't': '\u021B',
+    'S': '\u0218', 'T': '\u021A'
   };
   this.VKI_deadkey['\u3002'] = { // Hiragana/Katakana Point
     '\u306f': '\u3071', '\u3072': '\u3074', '\u3075': '\u3077', '\u3078': '\u307a', '\u307b': '\u307d',
@@ -1416,13 +1035,13 @@ var VKI_attach, VKI_close;
   };
 
 
-  /* ***** Define Symbols **************************************** */
+  /* ***** Define Symbols ****************************************** */
   this.VKI_symbol = {
     '\u00a0': "NB\nSP", '\u200b': "ZW\nSP", '\u200c': "ZW\nNJ", '\u200d': "ZW\nJ"
   };
 
 
-  /* ***** Layout Number Pad ************************************* */
+  /* ***** Layout Number Pad *************************************** */
   this.VKI_numpad = [
     [['$'], ['\u00a3'], ['\u20ac'], ['\u00a5']],
     [['7'], ['8'], ['9'], ['/']],
@@ -1432,7 +1051,408 @@ var VKI_attach, VKI_close;
   ];
 
 
-  /* ****************************************************************
+  /* *************************************************************** */
+  /* ***** Korean Specific Input *********************************** */
+  let VKI_KO_char = []; // Array of Jamo in current Hangul
+
+  /**
+  * Object of objects for each Jamo key. Each key has a lead, vowel,
+  * and tail number that is null or the number associated with Hangul
+  * Unicode algorithm. Every key also has a second that is null or an
+  * array of keys that can be the second key in a two key Jamo char.
+  */
+  let VKI_KO_jamo = {
+    '\u3131': {lead:    1, vowel: null, tail:    1, second: ['\u3145']},
+    '\u3132': {lead:    2, vowel: null, tail:    2, second: null},
+    '\u3134': {lead:    3, vowel: null, tail:    4, second: ['\u3148', '\u314e']},
+    '\u3137': {lead:    4, vowel: null, tail:    7, second: null},
+    '\u3138': {lead:    5, vowel: null, tail: null, second: null},
+    '\u3139': {lead:    6, vowel: null, tail:    8, second: ['\u3131', '\u3141', '\u3142', '\u3145', '\u314c', '\u314d', '\u314e']},
+    '\u3141': {lead:    7, vowel: null, tail:   16, second: null},
+    '\u3142': {lead:    8, vowel: null, tail:   17, second: ['\u3145']},
+    '\u3143': {lead:    9, vowel: null, tail: null, second: null},
+    '\u3145': {lead:   10, vowel: null, tail:   19, second: null},
+    '\u3146': {lead:   11, vowel: null, tail:   20, second: null},
+    '\u3147': {lead:   12, vowel: null, tail:   21, second: null},
+    '\u3148': {lead:   13, vowel: null, tail:   22, second: null},
+    '\u3149': {lead:   14, vowel: null, tail: null, second: null},
+    '\u314a': {lead:   15, vowel: null, tail:   23, second: null},
+    '\u314b': {lead:   16, vowel: null, tail:   24, second: null},
+    '\u314c': {lead:   17, vowel: null, tail:   25, second: null},
+    '\u314d': {lead:   18, vowel: null, tail:   26, second: null},
+    '\u314e': {lead:   19, vowel: null, tail:   27, second: null},
+    '\u314f': {lead: null, vowel:    1, tail: null, second: null},
+    '\u3150': {lead: null, vowel:    2, tail: null, second: null},
+    '\u3151': {lead: null, vowel:    3, tail: null, second: null},
+    '\u3152': {lead: null, vowel:    4, tail: null, second: null},
+    '\u3153': {lead: null, vowel:    5, tail: null, second: null},
+    '\u3154': {lead: null, vowel:    6, tail: null, second: null},
+    '\u3155': {lead: null, vowel:    7, tail: null, second: null},
+    '\u3156': {lead: null, vowel:    8, tail: null, second: null},
+    '\u3157': {lead: null, vowel:    9, tail: null, second: ['\u314f', '\u3150', '\u3163']},
+    '\u315b': {lead: null, vowel:   13, tail: null, second: null},
+    '\u315c': {lead: null, vowel:   14, tail: null, second: ['\u3153', '\u3154', '\u3163']},
+    '\u3160': {lead: null, vowel:   18, tail: null, second: null},
+    '\u3161': {lead: null, vowel:   19, tail: null, second: ['\u3163']},
+    '\u3163': {lead: null, vowel:   21, tail: null, second: null}
+  }
+
+  /**
+  * An object of objects for every Jamo vowel that is made up of two
+  * keys. Each Jamo has a vowel, which is the number associated with
+  * the Hangul algorithm, and combo, which is the sum of the two vowels
+  * numbers for the two Jamo keys that make it up.
+  */
+  let VKI_KO_jamoDoubleVowels = {
+    '\u3158': {vowel: 10, combo: 10, pair: ['\u3157', '\u314f']},
+    '\u3159': {vowel: 11, combo: 11, pair: ['\u3157', '\u3150']},
+    '\u315a': {vowel: 12, combo: 30, pair: ['\u3157', '\u3163']},
+    '\u315d': {vowel: 15, combo: 19, pair: ['\u315c', '\u1165']},
+    '\u315e': {vowel: 16, combo: 20, pair: ['\u315c', '\u3154']},
+    '\u315f': {vowel: 17, combo: 35, pair: ['\u315c', '\u3163']},
+    '\u3162': {vowel: 20, combo: 40, pair: ['\u3161', '\u3163']}
+  }
+
+  /**
+  * An object of objects for every Jamo tail that is made up of two
+  * keys. Each Jamo has a tail, which is the number associated with the
+  * Hangul algorithm, and combo, which is the sum of the two tail
+  * numbers for the two Jamo keys that make it up.
+  */
+  let VKI_KO_jamoDoubleTails = {
+    '\u3133': {tail:  3, combo: 20, val:  3, pair: ['\u3131', '\u3145']},
+    '\u3135': {tail:  5, combo: 26, val:  5, pair: ['\u3134', '\u110c']},
+    '\u3136': {tail:  6, combo: 31, val:  6, pair: ['\u3134', '\u314e']},
+    '\u313a': {tail:  9, combo:  9, val:  9, pair: ['\u3139', '\u3131']},
+    '\u313b': {tail: 10, combo: 24, val: 10, pair: ['\u3139', '\u3141']},
+    '\u313c': {tail: 11, combo: 25, val: 11, pair: ['\u3139', '\u3142']},
+    '\u313d': {tail: 12, combo: 27, val: 12, pair: ['\u3139', '\u3145']},
+    '\u313e': {tail: 13, combo: 33, val: 13, pair: ['\u3139', '\u314c']},
+    '\u313f': {tail: 14, combo: 34, val: 14, pair: ['\u3139', '\u314d']},
+    '\u3140': {tail: 15, combo: 35, val: 15, pair: ['\u3139', '\u314e']},
+    '\u3144': {tail: 18, combo: 36, val: 18, pair: ['\u3142', '\u3145']}
+  }
+
+  /**
+   * Finds the Hangul Unicode character from the given list of Jamo.
+   * @param {Array} jamoList array of Jamo
+   * @returns Hangul Unicode character
+   */
+  let VKI_KO_getHangul = function(jamoList) {
+
+    // Algorithm that finds the Hangul Unicode for the given Jamo
+    let hangulAlgorithm = function(lead, vowel, tail) {
+      return String.fromCodePoint(tail + (vowel - 1) * 28 + (lead - 1) * 588 + 44032);
+    };
+
+    let vSum = 0, tSum = 0;
+    switch (jamoList.length) {
+      case 1: return jamoList;
+
+      case 2: // LV, VV, TT
+        if (VKI_KO_jamo[jamoList[0]].lead != null && VKI_KO_jamo[jamoList[1]].vowel != null) {
+          return hangulAlgorithm(
+            VKI_KO_jamo[jamoList[0]].lead,
+            VKI_KO_jamo[jamoList[1]].vowel,
+            0
+          );
+        } else if (VKI_KO_jamo[jamoList[1]].tail != null && VKI_KO_jamo[jamoList[0]].tail != null) {
+          tSum = VKI_KO_jamo[jamoList[0]].tail + VKI_KO_jamo[jamoList[1]].tail;
+          for (jamoTPair in VKI_KO_jamoDoubleTails)
+            if (VKI_KO_jamoDoubleTails[jamoTPair].combo ==  tSum)
+              return jamoTPair;
+        } else if (VKI_KO_jamo[jamoList[0]].vowel != null && VKI_KO_jamo[jamoList[1]].vowel != null) {
+          vSum = VKI_KO_jamo[jamoList[0]].vowel + VKI_KO_jamo[jamoList[1]].vowel;
+          for (jamoVPair in VKI_KO_jamoDoubleVowels)
+            if (VKI_KO_jamoDoubleVowels[jamoVPair].combo == vSum)
+              return jamoVPair;
+        }
+        break;
+
+      case 3: // LVT, LVV
+        if (VKI_KO_jamo[jamoList[2]].tail != null) {
+          return hangulAlgorithm(
+            VKI_KO_jamo[jamoList[0]].lead,
+            VKI_KO_jamo[jamoList[1]].vowel,
+            VKI_KO_jamo[jamoList[2]].tail
+          );
+        } else if (VKI_KO_jamo[jamoList[2]].vowel != null) {
+          vSum = VKI_KO_jamo[jamoList[1]].vowel + VKI_KO_jamo[jamoList[2]].vowel;
+          for (jamoVPair in VKI_KO_jamoDoubleVowels)
+            if (VKI_KO_jamoDoubleVowels[jamoVPair].combo == vSum)
+              return hangulAlgorithm(
+                VKI_KO_jamo[jamoList[0]].lead,
+                VKI_KO_jamoDoubleVowels[jamoVPair].vowel,
+                0
+              );
+        }
+        break;
+
+      case 4: // LVVT, LVTT
+        if (VKI_KO_jamo[jamoList[2]].vowel != null) {
+          vSum = VKI_KO_jamo[jamoList[1]].vowel + VKI_KO_jamo[jamoList[2]].vowel;
+          for (jamoVPair in VKI_KO_jamoDoubleVowels)
+            if (VKI_KO_jamoDoubleVowels[jamoVPair].combo == vSum)
+              return hangulAlgorithm(
+                VKI_KO_jamo[jamoList[0]].lead,
+                VKI_KO_jamoDoubleVowels[jamoVPair].vowel,
+                VKI_KO_jamo[jamoList[3]].tail
+              );
+        }
+        tSum = VKI_KO_jamo[jamoList[2]].tail + VKI_KO_jamo[jamoList[3]].tail;
+        for (jamoTPair in VKI_KO_jamoDoubleTails)
+          if (VKI_KO_jamoDoubleTails[jamoTPair].combo == tSum)
+            return hangulAlgorithm(
+              VKI_KO_jamo[jamoList[0]].lead,
+              VKI_KO_jamo[jamoList[1]].vowel,
+              VKI_KO_jamoDoubleTails[jamoTPair].tail
+            );
+
+      case 5: // LVVTT
+        vSum = VKI_KO_jamo[jamoList[1]].vowel + VKI_KO_jamo[jamoList[2]].vowel;
+        tSum = VKI_KO_jamo[jamoList[3]].tail + VKI_KO_jamo[jamoList[4]].tail;
+        for (jamoVPair in VKI_KO_jamoDoubleVowels)
+          if (VKI_KO_jamoDoubleVowels[jamoVPair].combo == vSum)
+            for (jamoTPair in VKI_KO_jamoDoubleTails)
+              if (VKI_KO_jamoDoubleTails[jamoTPair].combo == tSum)
+                return hangulAlgorithm(
+                  VKI_KO_jamo[jamoList[0]].lead,
+                  VKI_KO_jamoDoubleVowels[jamoVPair].vowel,
+                  VKI_KO_jamoDoubleTails[jamoTPair].tail
+                );
+    }
+
+    return null;
+  };
+
+  /**
+   * Get the list of Jamo characters used to make up the given Hangul.
+   * Returns an array of Jamo compatible with VKI_KO_char. Basically
+   * the reverse of VKI_KO_getHangul.
+   * @param {*} Hangul character or Unicode of that character
+   * @returns array of Jamo that make up the given Hangul
+   */
+  let VKI_KO_getHangulParts = function(hangul) {
+    hangul = (typeof hangul == 'string') ? hangul.charCodeAt() : parseInt(hangul);
+
+    let jamo = [];
+
+    // Get tail, vowel, and lead values
+    let tail = Math.floor((hangul - 44032) % 28);
+    let vowel = Math.floor(1 + ((hangul - 44032 - tail) % 588) / 28);
+    let lead = Math.floor(1 + (hangul - 44032) / 588);
+
+    // Find unicode from values
+    for (const j in VKI_KO_jamo) {
+      if (VKI_KO_jamo[j].lead == lead) jamo.push(j);
+      if (VKI_KO_jamo[j].vowel == vowel) vowel = j;
+      if (VKI_KO_jamo[j].tail == tail) tail = j;
+    }
+
+    // Find two parts of vowel
+    if (Number.isInteger(vowel)) {
+      for (const j in VKI_KO_jamoDoubleVowels) {
+        if (VKI_KO_jamoDoubleVowels[j].vowel == vowel) {
+          jamo.push(VKI_KO_jamoDoubleVowels[j].pair[0]);
+          jamo.push(VKI_KO_jamoDoubleVowels[j].pair[1]);
+        }
+      }
+    } else jamo.push(vowel);
+
+    // Find two parts of tail
+    if (Number.isInteger(tail)) {
+      for (const j in VKI_KO_jamoDoubleTails) {
+        if (VKI_KO_jamoDoubleTails[j].tail == tail) {
+          jamo.push(VKI_KO_jamoDoubleTails[j].pair[0]);
+          jamo.push(VKI_KO_jamoDoubleTails[j].pair[1]);
+        }
+      }
+    } else jamo.push(tail);
+
+    return jamo;
+  };
+
+  /**
+   * Called from VKI_insert when selected keyboard is Korean. Updates
+   * 'text' and 'rng' values when an input Jamo can be added to the
+   * Hangul at the cursor position.
+   * @param {string} text string of the jamo key clicked.
+   * @param {array} rng current cursor range position in the field
+   * @returns array of updated 'text' and 'rng' variables
+   */
+  this.VKI_KO_insert = function(text, rng) {
+
+    // If input is a Jamo character
+    if (text.charCodeAt() >= 12593 && text.charCodeAt() <= 12643) {
+
+      // Get the Hangul Unicode with new added Jamo
+      let hangulText = false, hangulModify = true;
+      switch (VKI_KO_char.length) {
+        case 0: // First input
+          VKI_KO_char.push(text);
+          hangulText = text;
+          hangulModify = false;
+          break;
+
+        case 1: // Second Input: LV, VV, TT
+          if (VKI_KO_jamo[VKI_KO_char[0]].lead != null && VKI_KO_jamo[text].vowel != null) {
+            VKI_KO_char.push(text);
+            hangulText = VKI_KO_getHangul(VKI_KO_char);
+          } else if (VKI_KO_jamo[VKI_KO_char[0]].second != null) {
+            if (VKI_KO_jamo[VKI_KO_char[0]].second.includes(text)) {
+              VKI_KO_char.push(text);
+              hangulText = VKI_KO_getHangul(VKI_KO_char);
+              VKI_KO_char = [];
+            }
+          }
+          break;
+
+        case 2: // Third input: LVV, LVT
+          if (VKI_KO_jamo[VKI_KO_char[0]].lead != null && VKI_KO_jamo[VKI_KO_char[1]].vowel != null) {
+            if (VKI_KO_jamo[text].tail != null) { // Text is part of tail
+              VKI_KO_char.push(text);
+              hangulText = VKI_KO_getHangul(VKI_KO_char);
+            } else if (VKI_KO_jamo[VKI_KO_char[1]].second != null) { // LVV
+              if (VKI_KO_jamo[VKI_KO_char[1]].second.includes(text)) {
+                VKI_KO_char.push(text);
+                hangulText = VKI_KO_getHangul(VKI_KO_char);
+              }
+            }
+          }
+          break;
+
+        case 3: // Fourth input: LVVT, must be a tail
+          if (VKI_KO_jamo[text].vowel != null && VKI_KO_jamo[VKI_KO_char[2]].tail != null) {
+            // Next text is a vowel (move tail)
+            let k1 = VKI_KO_char.pop(), k2 = VKI_KO_getHangul(VKI_KO_char);
+            VKI_KO_char = [k1, text];
+            hangulText = k2 + VKI_KO_getHangul(VKI_KO_char);
+          } else if (VKI_KO_jamo[VKI_KO_char[2]].vowel != null && VKI_KO_jamo[text].vowel == null) {
+            VKI_KO_char.push(text);
+            hangulText = VKI_KO_getHangul(VKI_KO_char);
+          } else if (VKI_KO_jamo[VKI_KO_char[2]].second != null) { // LVTT
+            if (VKI_KO_jamo[VKI_KO_char[2]].second.includes(text)) {
+              VKI_KO_char.push(text);
+              hangulText = VKI_KO_getHangul(VKI_KO_char);
+            }
+          }
+          break;
+
+        case 4: // Fifth input: Must be second text in two part tail
+          if (VKI_KO_jamo[text].vowel != null && VKI_KO_jamo[VKI_KO_char[3]].tail != null) {
+            // Next text is a vowel (move tail)
+            let k1 = VKI_KO_char.pop(), k2 = VKI_KO_getHangul(VKI_KO_char);
+            VKI_KO_char = [k1, text];
+            hangulText = k2 + VKI_KO_getHangul(VKI_KO_char);
+          } else if (VKI_KO_jamo[VKI_KO_char[3]].second != null) {
+            if (VKI_KO_jamo[VKI_KO_char[3]].second.includes(text)) {
+              VKI_KO_char.push(text);
+              hangulText = VKI_KO_getHangul(VKI_KO_char);
+            }
+          }
+          break;
+
+        case 5: // Sixth input: Start of new Hangul
+          if (VKI_KO_jamo[text].vowel != null && VKI_KO_jamo[VKI_KO_char[4]].tail != null) {
+            // Next text is a vowel (move tail)
+            let k1 = VKI_KO_char.pop(), k2 = VKI_KO_getHangul(VKI_KO_char);
+            VKI_KO_char = [k1, text];
+            hangulText = k2 + VKI_KO_getHangul(VKI_KO_char);
+          }
+      }
+
+      if (!hangulText) {
+        VKI_KO_char = [];
+        hangulModify = false;
+      } else text = hangulText;
+
+      // If a Jamo was added that modifies the current Hangul
+      if (hangulModify) {
+        // Delete the previous, unmodified Hangul
+        if (rng[0] < rng[1]) rng[0]++;
+        this.VKI_target.value = this.VKI_target.value.substr(0, rng[0] - 1) + this.VKI_target.value.substr(rng[1]);
+        rng[0]--; rng[1]--;
+      }
+
+      let koComplete = document.getElementById('keyboardInputKOComplete');
+      if (koComplete) koComplete.textContent = (text.length > 1) ? text[1] : text;
+
+    // Non Jamo input
+    } else this.VKI_KO_clearCurrent();
+
+    return [text, rng];
+  };
+
+  /**
+   * Called from VKI_backspace when selected keyboard is Korean. Checks
+   * if the backspaced character was Hangul and if so, checks if just
+   * one Jamo part of it can be deleted instead of the whole Hangul.
+   * @param {string} lastInput the character that was backspaced
+   * @param {array} rng current cursor range position in the field
+   */
+  this.VKI_KO_backspace = function(lastInput, rng) {
+
+    // If the backspaced character was Hangul or Jamo
+    if ((lastInput.charCodeAt() >= 12593 && lastInput.charCodeAt() <= 12643) || 
+        (lastInput.charCodeAt() >= 44032 && lastInput.charCodeAt() <= 55203)) {
+
+      // If nothing is in VKI_KO_char, get the Jamo from the
+      // backspaced Hangul and put it in VKI_KO_char
+      if (VKI_KO_char.length == 0)
+        VKI_KO_char = VKI_KO_getHangulParts(lastInput);
+
+      // Remove the last Jamo
+      VKI_KO_char.pop();
+
+      // Re-insert modified Hangul if it exists
+      if (VKI_KO_char.length != 0) {
+        lastInput = VKI_KO_getHangul(VKI_KO_char);
+        this.VKI_target.value = this.VKI_target.value.substr(0, rng[0]) + lastInput + this.VKI_target.value.substr(rng[1]);
+        this.VKI_target.setSelectionRange(rng[0] + lastInput.length, rng[0] + lastInput.length);
+      }
+    }
+
+    // If we're not currently working on any Hangul
+    if (VKI_KO_char.length == 0) {
+      // Check if previous character is also Hangul or Jamo and if
+      // so, load Jamo into VKI_KO_char
+      lastInput = this.VKI_target.value.substr(rng[0] - 2, rng[1] - 1);
+      if ((lastInput.charCodeAt() >= 12593 && lastInput.charCodeAt() <= 12643) || 
+          (lastInput.charCodeAt() >= 44032 && lastInput.charCodeAt() <= 55203)) {
+        VKI_KO_char = VKI_KO_getHangulParts(lastInput);
+      } else lastInput = '';
+    }
+
+    // Update the Korean complete button contents
+    let koComplete = document.getElementById('keyboardInputKOComplete');
+    if (koComplete) koComplete.textContent = lastInput;
+  };
+
+  // Apply Korean-specific event listeners if layout is Korean
+  this.VKI_KO_targetEvents = function() {
+    if (this.VKI_target) {
+      if (this.VKI_kt == '\ud55c\uad6d\uc5b4') {
+        this.VKI_target.addEventListener('click', this.VKI_KO_clearCurrent, true);
+        this.VKI_target.addEventListener('keydown', this.VKI_KO_clearCurrent, true);
+      } else { // Else remove Korean-specific event listeners
+        this.VKI_target.removeEventListener('click', this.VKI_KO_clearCurrent, true);
+        this.VKI_target.removeEventListener('keydown', this.VKI_KO_clearCurrent, true);
+      }
+    }
+  };
+
+  // Shortcut function to end the current working Hangul and clear the
+  // Korean complete button
+  this.VKI_KO_clearCurrent = function() {
+    VKI_KO_char = [];
+    let koComplete = document.getElementById('keyboardInputKOComplete');
+    if (koComplete) koComplete.textContent = '';
+  };
+  /* ***** END Korean Specific Input ******************************* */
+  /* *************************************************************** */
+
+
+  /********************************************************************
    * Attach the keyboard to an element
    *
    */
@@ -1446,10 +1466,9 @@ var VKI_attach, VKI_close;
           keybut.title = self.VKI_i18n['01'];
           keybut.elem = elem;
           keybut.addEventListener('click', function(e) {
-            e = e || event;
-            if (e.stopPropagation) { e.stopPropagation(); } else e.cancelBubble = true;
+            e.stopPropagation();
             self.VKI_show(this.elem);
-          }, false);
+          });
       elem.parentNode.insertBefore(keybut, (elem.dir == 'rtl') ? elem : elem.nextSibling);
     } else {
       elem.addEventListener('focus', function() {
@@ -1457,10 +1476,10 @@ var VKI_attach, VKI_close;
           if (self.VKI_target) self.VKI_close();
           self.VKI_show(this);
         }
-      }, false);
+      });
       elem.addEventListener('click', function() {
         if (!self.VKI_target) self.VKI_show(this);
-      }, false);
+      });
     }
     elem.setAttribute('VKI_attached', 'true');
     elem.setAttribute('VKI_type', elem.type);
@@ -1472,18 +1491,10 @@ var VKI_attach, VKI_close;
     } else if (elem.type == 'number') {
       elem.setAttribute('VKI_numpadInput', 'true');
     } else elem.setAttribute('VKI_numpadInput', 'false');
-    if (self.VKI_isIE) {
-      elem.onclick = elem.onselect = elem.onkeyup = function(e) {
-        if ((e || event).type != 'keyup' || !this.readOnly)
-          this.range = document.selection.createRange();
-      };
-    }
-    VKI_addListener(elem, 'click', function(e) {
-      if (self.VKI_target == this) {
-        e = e || event;
-        if (e.stopPropagation) { e.stopPropagation(); } else e.cancelBubble = true;
-      } return false;
-    }, false);
+    elem.addEventListener('click', function(e) {
+      if (self.VKI_target == this) e.stopPropagation();
+      return false;
+    });
     if (self.VKI_flashPassword && elem.getAttribute('VKI_type') == 'password') {
       elem.setAttribute('autocomplete', 'new-password');
       elem.storeValue = elem.value;
@@ -1491,7 +1502,7 @@ var VKI_attach, VKI_close;
       elem.addEventListener('focus', function() {
         if (typeof this.timeout !== 'number')
           this.storeValue = this.value;
-      }, false);
+      });
       elem.restorePassword = function() {
         if (typeof this.timeout === 'number') {
           this.type = 'password';
@@ -1503,16 +1514,16 @@ var VKI_attach, VKI_close;
       if (elem.form) {
         elem.form.addEventListener('submit', function(e) {
           elem.restorePassword();
-        }, false);
+        });
       }
       elem.addEventListener('beforeinput', function() {
         elem.restorePassword();
-      }, false);
+      });
       elem.addEventListener('input', function() {
         let selfPass = this;
         if (this.value.length == this.storeValue.length + 1) {
           this.storeValue = this.value;
-          this.value = this.value.replace(/.(?!$)/g, '•');
+          this.value = this.value.replace(/.(?!$)/g, '\u2022');
           setTimeout(function() {
             selfPass.type = 'text';
             selfPass.setSelectionRange(selfPass.value.length, selfPass.value.length);
@@ -1523,14 +1534,14 @@ var VKI_attach, VKI_close;
             selfPass.timeout = false;
           }, self.VKI_flashPassword);
         } else this.storeValue = this.value;
-      }, false);
+      });
     }
     if (elem.getAttribute('VKI_numpadInput') == 'true') {
       elem.type = (elem.getAttribute('VKI_type') == 'password') ? 'password' : 'text';
       elem.addEventListener('beforeinput', function() {
         if (this.getAttribute('VKI_type') != 'password')
           this.storeValue = this.value;
-      }, false);
+      });
       elem.addEventListener('input', function() {
         let selfNumpadInput = this;
         if (!this.value.match(new RegExp(this.pattern)) ||
@@ -1539,33 +1550,16 @@ var VKI_attach, VKI_close;
           if (this.getAttribute('VKI_type') != 'password')
             this.value = this.storeValue;
         }
-      }, false);
+      });
     }
-    if (self.VKI_isMoz)
-      elem.addEventListener('blur', function() { this.setAttribute('_scrollTop', this.scrollTop); }, false);
   };
 
 
-  /* ***** Find tagged input & textarea elements ***************** */
-  function VKI_buildKeyboardInputs() {
-    let inputElems = [
-      document.getElementsByTagName('input'),
-      document.getElementsByTagName('textarea')
-    ];
-    for (let x = 0, elem; elem = inputElems[x++];)
-      for (let y = 0, ex; ex = elem[y++];)
-        if (ex.nodeName == 'TEXTAREA' || ex.type == 'text' || ex.type == 'number' || ex.type == 'password')
-          if (ex.classList.contains('keyboardInput')) VKI_attach(ex);
-
-    VKI_addListener(document.documentElement, 'click', function(e) { self.VKI_close(); }, false);
-  }
-
-
-  /* ****************************************************************
+  /* ******************************************************************
    * Common mouse event actions
    *
    */
-  function VKI_mouseEvents(elem) {
+  let VKI_mouseEvents = function(elem) {
     if (elem.nodeName == 'TD') {
       if (!elem.click) elem.click = function() {
         let evt = this.ownerDocument.createEvent('MouseEvents');
@@ -1573,46 +1567,72 @@ var VKI_attach, VKI_close;
         this.dispatchEvent(evt);
       };
       elem.VKI_clickless = 0;
-      VKI_addListener(elem, 'dblclick', function() { return false; }, false);
+      elem.addEventListener('dblclick', function() { return false; });
     }
-    VKI_addListener(elem, 'mouseover', function() {
+    elem.addEventListener('mouseover', function() {
       if (this.nodeName == 'TD' && self.VKI_clickless) {
         let _self = this;
         clearTimeout(this.VKI_clickless);
-        this.VKI_clickless = setTimeout(function() { _self.click(); }, self.VKI_clickless);
+        this.VKI_clickless = setTimeout(function() {
+          _self.click();
+        }, self.VKI_clickless);
       }
-      if (self.VKI_isIE) this.classList.add('hover');
-    }, false);
-    VKI_addListener(elem, 'mouseout', function() {
+    });
+    elem.clearClickless = function() {
       if (this.nodeName == 'TD') clearTimeout(this.VKI_clickless);
-      if (self.VKI_isIE) this.classList.remove('hover', 'pressed');
-    }, false);
-    VKI_addListener(elem, 'mousedown', function() {
-      if (this.nodeName == 'TD') clearTimeout(this.VKI_clickless);
-      if (self.VKI_isIE) this.classList.add('pressed');
-    }, false);
-    VKI_addListener(elem, 'mouseup', function() {
-      if (this.nodeName == 'TD') clearTimeout(this.VKI_clickless);
-      if (self.VKI_isIE) this.classList.remove('pressed');
-    }, false);
-  }
+    };
+    elem.addEventListener('mouseout', elem.clearClickless);
+    elem.addEventListener('mousedown', elem.clearClickless);
+    elem.addEventListener('mouseup', elem.clearClickless);
+  };
 
 
-  /* ***** Build the keyboard interface ************************** */
+  /* ****************************************************************
+   * Private table cell attachment function for generic characters
+   *
+   */
+  let VKI_keyClick = function() {
+    let done = false, character = '\xa0';
+    if (this.firstChild.nodeName.toLowerCase() != 'small') {
+      if ((character = this.firstChild.nodeValue) == '\xa0') return false;
+    } else character = this.firstChild.getAttribute('char');
+    if (self.VKI_deadkeysOn.checked && self.VKI_dead) {
+      if (self.VKI_dead != character) {
+        if (character != ' ') {
+          if (self.VKI_deadkey[self.VKI_dead][character]) {
+            self.VKI_insert(self.VKI_deadkey[self.VKI_dead][character]);
+            done = true;
+          }
+        } else {
+          self.VKI_insert(self.VKI_dead);
+          done = true;
+        }
+      } else done = true;
+    }
+    self.VKI_dead = false;
+
+    if (!done) {
+      if (self.VKI_deadkeysOn.checked && self.VKI_deadkey[character]) {
+        self.VKI_dead = character;
+        this.classList.add('dead');
+        if (self.VKI_shift) self.VKI_modify('Shift');
+        if (self.VKI_altgr) self.VKI_modify('AltGr');
+      } else self.VKI_insert(character);
+    }
+    self.VKI_modify('');
+    return false;
+  };
+
+
+  /* ***** Build the keyboard interface **************************** */
   this.VKI_keyboard = document.createElement('table');
   this.VKI_keyboard.id = 'keyboardInputMaster';
   this.VKI_keyboard.dir = 'ltr';
   this.VKI_keyboard.cellSpacing = '0';
-  this.VKI_keyboard.reflow = function() {
-    this.style.width = '50px';
-    let foo = this.offsetWidth;
-    this.style.width = '';
-  };
-  VKI_addListener(this.VKI_keyboard, 'click', function(e) {
-    e = e || event;
-    if (e.stopPropagation) { e.stopPropagation(); } else e.cancelBubble = true;
+  this.VKI_keyboard.addEventListener('click', function(e) {
+    e.stopPropagation();
     return false;
-  }, false);
+  });
 
   if (!this.VKI_layout[this.VKI_kt])
     return alert('No keyboard named "' + this.VKI_kt + '"');
@@ -1623,48 +1643,62 @@ var VKI_attach, VKI_close;
       let thth = document.createElement('th');
           thth.colSpan = '2';
 
-        let kbSelect = document.createElement('div');
-            kbSelect.id = 'keyboardInputSelect';
-            kbSelect.title = this.VKI_i18n['02'];
-          VKI_addListener(kbSelect, 'click', function() {
-            VKI_KO_clearCurrent();
-            let ol = this.getElementsByTagName('ol')[0];
-            if (!ol.style.display) {
-                ol.style.display = 'block';
-              let li = ol.getElementsByTagName('li'), scr = 0;
-              for (let x = 0; x < li.length; x++) {
-                if (VKI_kt == li[x].firstChild.nodeValue) {
-                  li[x].classList.add('selected');
-                  scr = li[x].offsetTop - li[x].offsetHeight * 2;
-                } else li[x].classList.remove('selected');
-              } setTimeout(function() { ol.scrollTop = scr; }, 0);
-            } else ol.style.display = '';
-          }, false);
-            kbSelect.appendChild(document.createTextNode(this.VKI_kt));
-            kbSelect.appendChild(document.createTextNode(this.VKI_isIElt8 ? ' \u2193' : ' \u25be'));
-            kbSelect.langCount = 0;
-          let ol = document.createElement('ol');
-            for (ktype in this.VKI_layout) {
-              if (typeof this.VKI_layout[ktype] == 'object') {
-                if (!this.VKI_layout[ktype].lang) this.VKI_layout[ktype].lang = [];
-                for (let x = 0; x < this.VKI_layout[ktype].lang.length; x++)
-                  this.VKI_langCode[this.VKI_layout[ktype].lang[x].toLowerCase().replace(/-/g, '_')] = ktype;
-                let li = document.createElement('li');
-                    li.title = this.VKI_layout[ktype].name;
-                  VKI_addListener(li, 'click', function(e) {
-                    e = e || event;
-                    if (e.stopPropagation) { e.stopPropagation(); } else e.cancelBubble = true;
+        this.VKI_select = document.createElement('div');
+        this.VKI_select.id = 'keyboardInputSelect';
+        this.VKI_select.title = this.VKI_i18n['02'];
+        this.VKI_select.sortType = 0;
+        this.VKI_select.addEventListener('click', function() {
+          self.VKI_KO_clearCurrent?.();
+          let ol = this.getElementsByTagName('ol')[0];
+          if (!ol.style.display || this.sortType < 2) {
+              ol.style.display = 'block';
+            let li = ol.getElementsByTagName('li'), scr = 0;
+            [...li].sort((a, b) => {
+              if (!this.sortType) {
+                return a.getAttribute('data-order') - b.getAttribute('data-order');
+              } else return (a.title > b.title) ? 1 : -1;
+            }).forEach(node => ol.appendChild(node));
+            for (let x = 0; x < li.length; x++) {
+              li[x].firstChild.nodeValue = (this.sortType) ? li[x].title : li[x].getAttribute('data-text');
+              if (VKI_kt == li[x].getAttribute('data-text')) {
+                li[x].classList.add('selected');
+                scr = li[x].offsetTop - li[x].offsetHeight * 2;
+              } else li[x].classList.remove('selected');
+            }
+            setTimeout(function() { ol.scrollTop = scr; }, 0);
+            this.sortType++;
+          } else {
+            ol.style.display = '';
+            this.sortType = 0;
+          }
+        });
+        this.VKI_select.appendChild(document.createTextNode(this.VKI_kt));
+        this.VKI_select.appendChild(document.createTextNode(' \u25be'));
+        this.VKI_select.langCount = 0;
+          let order = 0, ol = document.createElement('ol');
+            Object.keys(this.VKI_layout).forEach(ktype => {
+              if (!this.VKI_layout[ktype].lang) this.VKI_layout[ktype].lang = [];
+              for (let x = 0; x < this.VKI_layout[ktype].lang.length; x++)
+                this.VKI_langCode[this.VKI_layout[ktype].lang[x].toLowerCase().replace(/-/g, '_')] = ktype;
+              let li = document.createElement('li');
+                  li.title = this.VKI_layout[ktype].name;
+                  li.setAttribute('data-order', order++);
+                  li.setAttribute('data-text', ktype);
+                  li.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     this.parentNode.style.display = '';
-                    self.VKI_kts = self.VKI_kt = kbSelect.firstChild.nodeValue = this.firstChild.nodeValue;
+                    self.VKI_kts = self.VKI_kt = self.VKI_select.firstChild.nodeValue = this.getAttribute('data-text');
+                    self.VKI_select.sortType = 0;
                     self.VKI_buildKeys();
-                  }, false);
-                  VKI_mouseEvents(li);
-                    li.appendChild(document.createTextNode(ktype));
-                  ol.appendChild(li);
-                kbSelect.langCount++;
-              }
-            } kbSelect.appendChild(ol);
-          if (kbSelect.langCount > 1) thth.appendChild(kbSelect);
+                    self.VKI_KO_targetEvents?.(); // Korean target events
+                  });
+                VKI_mouseEvents(li);
+                  li.appendChild(document.createTextNode(ktype));
+                ol.appendChild(li);
+              this.VKI_select.langCount++;
+            });
+            this.VKI_select.appendChild(ol);
+          if (this.VKI_select.langCount > 1) thth.appendChild(this.VKI_select);
         this.VKI_langCode.index = [];
         for (prop in this.VKI_langCode)
           if (prop != 'index' && typeof this.VKI_langCode[prop] == 'string')
@@ -1673,114 +1707,99 @@ var VKI_attach, VKI_close;
         this.VKI_langCode.index.reverse();
 
         if (this.VKI_numberPad) {
-          let numtogspan = document.createElement('span');
-              numtogspan.id = 'keyboardInputNumpadToggle';
-              numtogspan.appendChild(document.createTextNode('#'));
-              numtogspan.title = this.VKI_i18n['00'];
-            VKI_addListener(numtogspan, 'click', function() {
-              kbNumpad.style.display = (!kbNumpad.style.display) ? 'none' : '';
-              kbNumpad.previousStyle = kbNumpad.style.display;
-              self.VKI_position(true);
-            }, false);
-            VKI_mouseEvents(numtogspan);
-            thth.appendChild(numtogspan);
+          let span = document.createElement('span');
+              span.id = 'keyboardInputNumpadToggle';
+              span.appendChild(document.createTextNode('#'));
+              span.title = this.VKI_i18n['00'];
+              span.addEventListener('click', function() {
+                self.VKI_numpadCell.style.display = (!self.VKI_numpadCell.style.display) ? 'none' : '';
+                self.VKI_numpadCell.previousStyle = self.VKI_numpadCell.style.display;
+                self.VKI_position(true);
+              });
+            VKI_mouseEvents(span);
+            thth.appendChild(span);
         }
 
-        this.VKI_kbsize = function(e) {
-          self.VKI_size = Math.min(5, Math.max(1, self.VKI_size));
+        this.VKI_kbSize = function(delta) {
+          self.VKI_size = Math.min(5, Math.max(1, self.VKI_size + delta));
           self.VKI_keyboard.className = self.VKI_keyboard.className.replace(/\bkeyboardInputSize\d\b/, '');
           if (self.VKI_size != 2) self.VKI_keyboard.classList.add('keyboardInputSize' + self.VKI_size);
           self.VKI_position(true);
-          if (self.VKI_isOpera) self.VKI_keyboard.reflow();
         };
         if (this.VKI_sizeAdj) {
           let small = document.createElement('small');
               small.title = this.VKI_i18n['10'];
-            VKI_addListener(small, 'click', function() {
-              --self.VKI_size;
-              self.VKI_kbsize();
-            }, false);
+              small.addEventListener('click', function() { self.VKI_kbSize(-1); });
             VKI_mouseEvents(small);
-              small.appendChild(document.createTextNode(this.VKI_isIElt8 ? '\u2193' : '\u21d3'));
+              small.appendChild(document.createTextNode('\u21d3'));
             thth.appendChild(small);
           let big = document.createElement('big');
               big.title = this.VKI_i18n['11'];
-            VKI_addListener(big, 'click', function() {
-              ++self.VKI_size;
-              self.VKI_kbsize();
-            }, false);
+              big.addEventListener('click', function() { self.VKI_kbSize(1); });
             VKI_mouseEvents(big);
-              big.appendChild(document.createTextNode(this.VKI_isIElt8 ? '\u2191' : '\u21d1'));
+              big.appendChild(document.createTextNode('\u21d1'));
             thth.appendChild(big);
         }
 
-        let numbkspspan = document.createElement('span');
-            numbkspspan.id = 'keyboardInputNumpadBksp';
-            numbkspspan.appendChild(document.createTextNode('\u21E6'));
-            numbkspspan.title = this.VKI_i18n['12'];
-          VKI_addListener(numbkspspan, 'click', function() { self.VKI_backspace(); }, false);
-          VKI_mouseEvents(numbkspspan);
-          thth.appendChild(numbkspspan);
+        let span = document.createElement('span');
+            span.id = 'keyboardInputNumpadBksp';
+            span.appendChild(document.createTextNode('\u21E6'));
+            span.title = this.VKI_i18n['12'];
+            span.addEventListener('click', function() { self.VKI_backspace(); });
+          VKI_mouseEvents(span);
+          thth.appendChild(span);
 
-        if (this.VKI_movement) {
-          let keyX = 0;
-          let keyY = 0;
-          function moveAt(pageX, pageY) {
+        if (this.VKI_move) {
+          this.VKI_move = document.createElement('span');
+          this.VKI_move.pos = [0, 0];
+          this.VKI_move.appendChild(document.createTextNode('\u2725'));
+          this.VKI_move.title = this.VKI_i18n['14'];
+          this.VKI_move.move = function(e) {
             if (self.VKI_target.keyboardPosition == 'fixed') {
-              self.VKI_keyboard.style.left = pageX - keyX + 'px';
-              self.VKI_keyboard.style.top = pageY - keyY + 'px';
+              self.VKI_keyboard.style.left = e.pageX - self.VKI_move.pos[0] + 'px';
+              self.VKI_keyboard.style.top = e.pageY - self.VKI_move.pos[1] + 'px';
+            } else {
+              self.VKI_keyboard.style.left = e.pageX + VKI_scrollDist()[0] - self.VKI_move.pos[0] + VKI_scrollDist()[0] + 'px';
+              self.VKI_keyboard.style.top = e.pageY + VKI_scrollDist()[1] - self.VKI_move.pos[1] + VKI_scrollDist()[1] + 'px';
             }
-            else {
-              self.VKI_keyboard.style.left = pageX + VKI_scrollDist()[0] - keyX + VKI_scrollDist()[0] + 'px';
-              self.VKI_keyboard.style.top = pageY + VKI_scrollDist()[1] - keyY + VKI_scrollDist()[1] + 'px';
-            }
+          };
+          this.VKI_move.drop = function() {
+            document.removeEventListener('mousemove', self.VKI_move.move);
+            document.removeEventListener('mouseup', self.VKI_move.drop);
           }
-          function onMouseMove(event) {
-            moveAt(event.pageX, event.pageY);
-          }
-          function mouseUp() {
-            document.removeEventListener('mousemove', onMouseMove);
-            document.removeEventListener('mouseup', mouseUp);
-          }
-          let moveOsk = document.createElement('span');
-            moveOsk.id = 'moveOsk';
-            moveOsk.appendChild(document.createTextNode('\u2725'));
-            moveOsk.title = this.VKI_i18n['14'];
-            moveOsk.addEventListener('mousedown', function(event) {
-                event.preventDefault();
-                let cord = document.getElementById('keyboardInputMaster').getBoundingClientRect();
-                if (self.VKI_target.keyboardPosition == 'fixed') {
-                  keyX = event.pageX - cord.left;
-                  keyY = event.pageY - cord.top;
-                }
-                else {
-                  keyX = event.pageX + VKI_scrollDist()[0] - cord.left;
-                  keyY = event.pageY + VKI_scrollDist()[1] - cord.top;
-                }
-                document.addEventListener('mousemove', onMouseMove);
-                document.addEventListener('mouseup', mouseUp);
-            });
-            VKI_mouseEvents(moveOsk);
-            thth.appendChild(moveOsk);
+          this.VKI_move.addEventListener('mousedown', function(event) {
+              event.preventDefault();
+              let coord = self.VKI_keyboard.getBoundingClientRect();
+              if (self.VKI_target.keyboardPosition == 'fixed') {
+                self.VKI_move.pos[0] = event.pageX - coord.left;
+                self.VKI_move.pos[1] = event.pageY - coord.top;
+              } else {
+                self.VKI_move.pos[0] = event.pageX + VKI_scrollDist()[0] - coord.left;
+                self.VKI_move.pos[1] = event.pageY + VKI_scrollDist()[1] - coord.top;
+              }
+              document.addEventListener('mousemove', self.VKI_move.move);
+              document.addEventListener('mouseup', self.VKI_move.drop);
+          });
+          VKI_mouseEvents(this.VKI_move);
+          thth.appendChild(this.VKI_move);
         }
 
-        let clrspan = document.createElement('span');
-            clrspan.appendChild(document.createTextNode(this.VKI_i18n['07']));
-            clrspan.title = this.VKI_i18n['08'];
-          VKI_addListener(clrspan, 'click', function() {
-            self.VKI_target.value = '';
-            self.VKI_target.focus();
-            //Clear Complete button when clear is pressed.
-            VKI_KO_clearCurrent();
-            return false;
-          }, false);
-          VKI_mouseEvents(clrspan);
-          thth.appendChild(clrspan);
+            span = document.createElement('span');
+            span.appendChild(document.createTextNode(this.VKI_i18n['07']));
+            span.title = this.VKI_i18n['08'];
+            span.addEventListener('click', function() {
+              self.VKI_target.value = '';
+              self.VKI_target.focus();
+              self.VKI_KO_clearCurrent?.();
+              return false;
+            });
+          VKI_mouseEvents(span);
+          thth.appendChild(span);
 
         let strong = document.createElement('strong');
             strong.appendChild(document.createTextNode('X'));
             strong.title = this.VKI_i18n['06'];
-          VKI_addListener(strong, 'click', function() { self.VKI_close(); }, false);
+            strong.addEventListener('click', function() { self.VKI_close(); });
           VKI_mouseEvents(strong);
           thth.appendChild(strong);
 
@@ -1800,11 +1819,11 @@ var VKI_attach, VKI_close;
                 checkbox.type = 'checkbox';
                 checkbox.title = this.VKI_i18n['03'] + ': ' + ((this.VKI_deadkeysOn) ? this.VKI_i18n['04'] : this.VKI_i18n['05']);
                 checkbox.defaultChecked = this.VKI_deadkeysOn;
-              VKI_addListener(checkbox, 'click', function() {
-                this.title = self.VKI_i18n['03'] + ': ' + ((this.checked) ? self.VKI_i18n['04'] : self.VKI_i18n['05']);
-                self.VKI_modify('');
-                return true;
-              }, false);
+                checkbox.addEventListener('click', function() {
+                  this.title = self.VKI_i18n['03'] + ': ' + ((this.checked) ? self.VKI_i18n['04'] : self.VKI_i18n['05']);
+                  self.VKI_modify('');
+                  return true;
+                });
               label.appendChild(checkbox);
                 checkbox.checked = this.VKI_deadkeysOn;
             div.appendChild(label);
@@ -1816,79 +1835,38 @@ var VKI_attach, VKI_close;
               vr.title = this.VKI_i18n['09'] + ' ' + this.VKI_version;
               vr.appendChild(document.createTextNode('v' + this.VKI_version));
             div.appendChild(vr);
-        } td.appendChild(div);
+        }
+          td.appendChild(div);
         tr.appendChild(td);
 
-      let kbNumpad = document.createElement('td');
-          kbNumpad.id = 'keyboardInputNumpad';
-        if (!this.VKI_numberPadOn) {
-          kbNumpad.style.display = 'none';
-          kbNumpad.previousStyle = 'none';
-        } else kbNumpad.previousStyle = '';
-        let ntable = document.createElement('table');
-            ntable.cellSpacing = '0';
-          let ntbody = document.createElement('tbody');
-            for (let x = 0; x < this.VKI_numpad.length; x++) {
-              let ntr = document.createElement('tr');
-                for (let y = 0; y < this.VKI_numpad[x].length; y++) {
-                  let ntd = document.createElement('td');
-                    VKI_addListener(ntd, 'click', VKI_keyClick, false);
-                    VKI_mouseEvents(ntd);
-                      if (this.VKI_numpad[x][y][0].match(/\d/)) ntd.classList.add('digit');
-                      if (this.VKI_numpad[x][y][0] == '.') ntd.classList.add('decimal');
-                      if (this.VKI_numpad[x][y][0] == '-') ntd.classList.add('negative');
-                      ntd.appendChild(document.createTextNode(this.VKI_numpad[x][y][0]));
-                    ntr.appendChild(ntd);
-                } ntbody.appendChild(ntr);
-            } ntable.appendChild(ntbody);
-          kbNumpad.appendChild(ntable);
-        tr.appendChild(kbNumpad);
+      this.VKI_numpadCell = document.createElement('td');
+      this.VKI_numpadCell.id = 'keyboardInputNumpad';
+      if (!this.VKI_numberPadOn) {
+        this.VKI_numpadCell.style.display = 'none';
+        this.VKI_numpadCell.previousStyle = 'none';
+      } else this.VKI_numpadCell.previousStyle = '';
+      let ntable = document.createElement('table');
+          ntable.cellSpacing = '0';
+        let ntbody = document.createElement('tbody');
+          for (let x = 0; x < this.VKI_numpad.length; x++) {
+            let ntr = document.createElement('tr');
+              for (let y = 0; y < this.VKI_numpad[x].length; y++) {
+                let ntd = document.createElement('td');
+                    ntd.addEventListener('click', VKI_keyClick);
+                  VKI_mouseEvents(ntd);
+                    if (this.VKI_numpad[x][y][0].match(/\d/)) ntd.classList.add('digit');
+                    if (this.VKI_numpad[x][y][0] == '.') ntd.classList.add('decimal');
+                    if (this.VKI_numpad[x][y][0] == '-') ntd.classList.add('negative');
+                    ntd.appendChild(document.createTextNode(this.VKI_numpad[x][y][0]));
+                  ntr.appendChild(ntd);
+              }
+                ntbody.appendChild(ntr);
+          }
+            ntable.appendChild(ntbody);
+          this.VKI_numpadCell.appendChild(ntable);
+        tr.appendChild(this.VKI_numpadCell);
       tbody.appendChild(tr);
   this.VKI_keyboard.appendChild(tbody);
-
-  if (this.VKI_isIE6) {
-    this.VKI_iframe = document.createElement('iframe');
-    this.VKI_iframe.style.position = 'absolute';
-    this.VKI_iframe.style.border = '0 none';
-    this.VKI_iframe.style.filter = 'mask()';
-    this.VKI_iframe.style.zIndex = '999999';
-    this.VKI_iframe.src = 'about:blank';
-  }
-
-
-  /* ****************************************************************
-   * Private table cell attachment function for generic characters
-   *
-   */
-  function VKI_keyClick() {
-    let done = false, character = '\xa0';
-    if (this.firstChild.nodeName.toLowerCase() != 'small') {
-      if ((character = this.firstChild.nodeValue) == '\xa0') return false;
-    } else character = this.firstChild.getAttribute('char');
-    if (self.VKI_deadkeysOn.checked && self.VKI_dead) {
-      if (self.VKI_dead != character) {
-        if (character != ' ') {
-          if (self.VKI_deadkey[self.VKI_dead][character]) {
-            self.VKI_insert(self.VKI_deadkey[self.VKI_dead][character]);
-            done = true;
-          }
-        } else {
-          self.VKI_insert(self.VKI_dead);
-          done = true;
-        }
-      } else done = true;
-    } self.VKI_dead = false;
-
-    if (!done) {
-      if (self.VKI_deadkeysOn.checked && self.VKI_deadkey[character]) {
-        self.VKI_dead = character;
-        this.classList.add('dead');
-        if (self.VKI_shift) self.VKI_modify('Shift');
-        if (self.VKI_altgr) self.VKI_modify('AltGr');
-      } else self.VKI_insert(character);
-    } self.VKI_modify('');
-    return false;
-  }
 
 
   /* ****************************************************************
@@ -1917,7 +1895,8 @@ var VKI_attach, VKI_close;
                   for (let z = 0; z < text.length; z++) {
                     if (z) small.appendChild(document.createElement('br'));
                     small.appendChild(document.createTextNode(text[z]));
-                  } td.appendChild(small);
+                  }
+                    td.appendChild(small);
                 } else td.appendChild(document.createTextNode(lkey[0] || '\xa0'));
 
                 if (this.VKI_deadkeysOn.checked)
@@ -1929,10 +1908,10 @@ var VKI_attach, VKI_close;
                 switch (lkey[1]) {
                   case 'Caps': case 'Shift':
                   case 'Alt': case 'AltGr': case 'AltLk':
-                    VKI_addListener(td, 'click', (function(type) { return function() { self.VKI_modify(type); return false; }})(lkey[1]), false);
+                    td.addEventListener('click', (function(type) { return function() { self.VKI_modify(type); return false; }})(lkey[1]));
                     break;
                   case 'Tab':
-                    VKI_addListener(td, 'click', function() {
+                    td.addEventListener('click', function() {
                       if (self.VKI_activeTab) {
                         if (self.VKI_target.form) {
                           let target = self.VKI_target, elems = target.form.elements;
@@ -1943,21 +1922,22 @@ var VKI_attach, VKI_close;
                               if (self.VKI_activeTab == 1 && elems[z]) break;
                               if (elems[z].getAttribute('VKI_attached')) break;
                             } else if (elems[z] == target) me = true;
-                          } if (z == elems.length) z = Math.max(j, 0);
+                          }
+                          if (z == elems.length) z = Math.max(j, 0);
                           if (elems[z].getAttribute('VKI_attached')) {
                             self.VKI_show(elems[z]);
                           } else elems[z].focus();
                         } else self.VKI_target.focus();
                       } else self.VKI_insert("\t");
                       return false;
-                    }, false);
+                    });
                     break;
                   case 'Bksp':
                     td.title = this.VKI_i18n['12'];
-                    VKI_addListener(td, 'click', function() { self.VKI_backspace(); }, false);
+                    td.addEventListener('click', function() { self.VKI_backspace(); });
                     break;
                   case 'Enter':
-                    VKI_addListener(td, 'click', function() {
+                    td.addEventListener('click', function() {
                       if (self.VKI_target.nodeName != 'TEXTAREA') {
                         if (self.VKI_enterSubmit && self.VKI_target.form) {
                           for (let z = 0, subm = false; z < self.VKI_target.form.elements.length; z++)
@@ -1967,51 +1947,39 @@ var VKI_attach, VKI_close;
                         self.VKI_close();
                       } else self.VKI_insert("\n");
                       return true;
-                    }, false);
+                    });
                     break;
-                    //Only for Korean, finishes Hangul/Jamo that was being worked on
-                    case 'Complete':
-                      td.title = this.VKI_i18n['13'];
-                      td.id = 'completeBtn';
-                      td.textContent = '';
-                      VKI_addListener(td, 'click', function() {
-                        self.VKI_target.focus();
-                        VKI_KO_clearCurrent();
-                        self.VKI_target.setSelectionRange(self.VKI_target.selectionStart, self.VKI_target.selectionStart); //keeps cursor in place
-                      }, false);
-                      break;
+                  case 'Complete': // Korean input only
+                    td.title = this.VKI_i18n['13'];
+                    td.id = 'keyboardInputKOComplete';
+                    td.textContent = '';
+                    td.addEventListener('click', function() {
+                      self.VKI_target.focus();
+                      self.VKI_KO_clearCurrent?.();
+                      // Keep the cursor in place
+                      self.VKI_target.setSelectionRange(self.VKI_target.selectionStart, self.VKI_target.selectionStart);
+                    });
+                    break;
                   default:
-                    VKI_addListener(td, 'click', VKI_keyClick, false);
+                    td.addEventListener('click', VKI_keyClick);
 
-                } VKI_mouseEvents(td);
+                }
+                VKI_mouseEvents(td);
                 tr.appendChild(td);
               for (let z = 0; z < 4; z++)
                 if (this.VKI_deadkey[lkey[z] = lkey[z] || '']) hasDeadKey = true;
-            } tbody.appendChild(tr);
+            }
+            tbody.appendChild(tr);
           table.appendChild(tbody);
         container.appendChild(table);
     }
     if (this.VKI_deadBox)
       this.VKI_deadkeysOn.style.display = (hasDeadKey) ? 'inline' : 'none';
-    if (this.VKI_isIE6) {
-      this.VKI_iframe.style.width = this.VKI_keyboard.offsetWidth + 'px';
-      this.VKI_iframe.style.height = this.VKI_keyboard.offsetHeight + 'px';
-    }
-    //remove Korean event listeners if they exist
-    if (kEventListeners) {
-      VKI_KO_removeKEventListeners();
-    }
-    //add Korean event listeners if Korean Layout being built
-    if (this.VKI_target != false && this.VKI_kt == '\ud55c\uad6d\uc5b4') {
-      VKI_KO_addKEventListener(this.VKI_target);
-    }
   };
 
   this.VKI_buildKeys();
-  VKI_addListener(this.VKI_keyboard, 'selectstart', function() { return false; }, false);
+  this.VKI_keyboard.addEventListener('selectstart', function() { return false; });
   this.VKI_keyboard.unselectable = 'on';
-  if (this.VKI_isOpera)
-    VKI_addListener(this.VKI_keyboard, 'mousedown', function() { return false; }, false);
 
 
   /* ****************************************************************
@@ -2062,7 +2030,8 @@ var VKI_attach, VKI_close;
                 for (let z = 0; z < text.length; z++) {
                   if (z) small.appendChild(document.createElement('br'));
                   small.appendChild(document.createTextNode(text[z]));
-                } tds[y].appendChild(small);
+                }
+                tds[y].appendChild(small);
               } else tds[y].appendChild(document.createTextNode(lkey[vchar] || '\xa0'));
             }
             if (this.VKI_deadkeysOn.checked) {
@@ -2089,111 +2058,67 @@ var VKI_attach, VKI_close;
   this.VKI_insert = function(text) {
     this.VKI_target.dispatchEvent(new Event('beforeinput'));
     this.VKI_target.focus();
-    if (this.VKI_target.maxLength) this.VKI_target.maxlength = this.VKI_target.maxLength;
+    if (this.VKI_target.maxLength)
+      this.VKI_target.maxlength = this.VKI_target.maxLength;
+
     if (typeof this.VKI_target.maxlength == 'undefined' ||
         this.VKI_target.maxlength < 0 ||
         this.VKI_target.value.length < this.VKI_target.maxlength) {
-      if (this.VKI_target.setSelectionRange && !this.VKI_target.readOnly && !this.VKI_isIE) {
+
+      if (!this.VKI_target.readOnly) {
         let rng = [this.VKI_target.selectionStart, this.VKI_target.selectionEnd];
-        //For Korean
-        //If input is a Jamo key
-        if (text.charCodeAt() >= 12593 && text.charCodeAt() <= 12643) {
-          hangulOutput = VKI_KO_jamoKeyInput(text); //Get the Hangul Unicode with new added Jamo
-          //Jamo was added to Hangul, need to remove previous one
-          if (!hangulOutput[1]) {
-              hangulEdit = true;
-              //remove char before
-              if (rng[0] < rng[1])
-                  rng[0]++;
-              self.VKI_target.value = self.VKI_target.value.substr(0, rng[0] - 1) + self.VKI_target.value.substr(rng[1]);
-              rng[0]--;
-              rng[1]--;
-              text = hangulOutput[0];
-          }
-          else { //Start of new Hangul, so no need to delete last output
-              text = hangulOutput[0];
-            }
-          if (hangulOutput[0].length > 1) {
-          hangulOutput[0] = hangulOutput[0][1];
-          }
-          document.getElementById('completeBtn').textContent = hangulOutput[0];
+
+        // If using the Korean keyboard
+        if (this.VKI_kt == '\ud55c\uad6d\uc5b4') {
+          let val = this.VKI_KO_insert?.(text, rng);
+          if (typeof val != 'undefined') [text, rng] = val;
         }
-        //non-Hangul/Jamo input resets VKI_KO_current
-        else if (!(text.charCodeAt() >= 44032 && text.charCodeAt() <= 55203)) {
-          VKI_KO_clearCurrent();
-        }
-        else if (text.charCodeAt() >= 44032 && text.charCodeAt() <= 55203) {
-          document.getElementById('completeBtn').textContent = text;
-        }
+
         this.VKI_target.value = this.VKI_target.value.substr(0, rng[0]) + text + this.VKI_target.value.substr(rng[1]);
-        if (text == "\n" && this.VKI_isOpera) rng[0]++;
         this.VKI_target.setSelectionRange(rng[0] + text.length, rng[0] + text.length);
-      } else if (this.VKI_target.createTextRange && !this.VKI_target.readOnly) {
-        try {
-          this.VKI_target.range.select();
-        } catch(e) { this.VKI_target.range = document.selection.createRange(); }
-        this.VKI_target.range.text = text;
-        this.VKI_target.range.collapse(true);
-        this.VKI_target.range.select();
-      } else this.VKI_target.value += text;
+
+      } // Readonly
+
       if (this.VKI_shift) this.VKI_modify('Shift');
       if (this.VKI_altgr) this.VKI_modify('AltGr');
       this.VKI_target.dispatchEvent(new Event('input'));
       this.VKI_target.focus();
-    } else if (this.VKI_target.createTextRange && this.VKI_target.range)
-      this.VKI_target.range.select();
+
+    } // Addition of this character would be over the maxLength
   };
 
 
-  /* ****************************************************************
+  /* ******************************************************************
    * Delete a character behind the cursor
    *
    */
   this.VKI_backspace = function() {
-    self.VKI_target.focus();
-    if (self.VKI_target.setSelectionRange && !self.VKI_target.readOnly) {
-      let rng = [self.VKI_target.selectionStart, self.VKI_target.selectionEnd];
-      //For Korean
-      let lastInput = self.VKI_target.value.substr(rng[0] - 1, rng[1]);
-      //If Hangul or non-lead Jamo is being removed
-      if ((lastInput.charCodeAt() >= 12593 && lastInput.charCodeAt() <= 12643) || (lastInput.charCodeAt() >= 44032 && lastInput.charCodeAt() <= 55203) && this.VKI_kt == '\ud55c\uad6d\uc5b4') { //check to see if the keyboard being used is Korean
-        if (self.VKI_target.value.substr(0, rng[1]) != '') {
-          //Check if nothings in VKI_KO_current, if not get the keys in the Hangul before cursor in VKI_KO_current
-          if (VKI_KO_current.length == 0) VKI_KO_GetHangulParts(lastInput);
-          VKI_KO_current.pop();
-          if (rng[0] < rng[1]) rng[0]++;
-          self.VKI_target.value = self.VKI_target.value.substr(0, rng[0] - 1) + self.VKI_target.value.substr(rng[1]); //removes the char
-          //replace the new Hangul with removed Jamo
-          self.VKI_target.setSelectionRange(rng[0] - 1, rng[0] - 1); //keeps cursor inplace
-          if (VKI_KO_current.length == 1) self.VKI_insert(VKI_KO_current[0]);
-          if (VKI_KO_current.length > 1) self.VKI_insert(VKI_KO_Hangul(VKI_KO_current));
-          if (VKI_KO_current.length == 0) {
-          if (this.VKI_kt == '\ud55c\uad6d\uc5b4') document.getElementById('completeBtn').textContent = '';
-          }
-        }
-      }
-      //remove non-Hangul/Jamo
-      else {
-        if (this.VKI_kt == '\ud55c\uad6d\uc5b4') document.getElementById('completeBtn').textContent = '';
-          if (rng[0] < rng[1]) rng[0]++;
-          self.VKI_target.value = self.VKI_target.value.substr(0, rng[0] - 1) + self.VKI_target.value.substr(rng[1]);
-          self.VKI_target.setSelectionRange(rng[0] - 1, rng[0] - 1);
-      }
-    } else if (self.VKI_target.createTextRange && !self.VKI_target.readOnly) {
-      try {
-        self.VKI_target.range.select();
-      } catch(e) { self.VKI_target.range = document.selection.createRange(); }
-      if (!self.VKI_target.range.text.length) self.VKI_target.range.moveStart('character', -1);
-      self.VKI_target.range.text = '';
-    } else self.VKI_target.value = self.VKI_target.value.substr(0, self.VKI_target.value.length - 1);
-    if (self.VKI_shift) self.VKI_modify('Shift');
-    if (self.VKI_altgr) self.VKI_modify('AltGr');
-    self.VKI_target.focus();
+    this.VKI_target.focus();
+    if (!this.VKI_target.readOnly) {
+      let rng = [this.VKI_target.selectionStart, this.VKI_target.selectionEnd];
+
+      // Get the character we're about to delete with backspace
+      let lastInput = this.VKI_target.value.substr(rng[0] - 1, rng[1]);
+
+      // Delete the previous character
+      if (rng[0] < rng[1]) rng[0]++;
+      this.VKI_target.value = this.VKI_target.value.substr(0, rng[0] - 1) + this.VKI_target.value.substr(rng[1]);
+      this.VKI_target.setSelectionRange(rng[0] - 1, rng[0] - 1);
+
+      // If using the Korean keyboard
+      if (this.VKI_kt == '\ud55c\uad6d\uc5b4')
+        this.VKI_KO_backspace?.(lastInput, rng);
+
+    } // Readonly
+
+    if (this.VKI_shift) this.VKI_modify('Shift');
+    if (this.VKI_altgr) this.VKI_modify('AltGr');
+    this.VKI_target.focus();
     return true;
   };
 
 
-  /* ****************************************************************
+  /* ******************************************************************
    * Show the keyboard interface
    *
    */
@@ -2204,41 +2129,36 @@ var VKI_attach, VKI_close;
         let chg = false, sub = [], lang = this.VKI_target.lang.toLowerCase().replace(/-/g, '_');
         for (let x = 0; !chg && x < this.VKI_langCode.index.length; x++)
           if (lang.indexOf(this.VKI_langCode.index[x]) == 0)
-            chg = kbSelect.firstChild.nodeValue = this.VKI_kt = this.VKI_langCode[this.VKI_langCode.index[x]];
+            chg = this.VKI_select.firstChild.nodeValue = this.VKI_kt = this.VKI_langCode[this.VKI_langCode.index[x]];
         if (chg) this.VKI_buildKeys();
       }
-      if (this.VKI_isIE) {
-        if (!this.VKI_target.range) {
-          this.VKI_target.range = this.VKI_target.createTextRange();
-          this.VKI_target.range.moveStart('character', this.VKI_target.value.length);
-        } this.VKI_target.range.select();
-      }
-      try { this.VKI_keyboard.parentNode.removeChild(this.VKI_keyboard); } catch (e) {}
+      try {
+        this.VKI_keyboard.parentNode.removeChild(this.VKI_keyboard);
+      } catch (e) {}
       if (this.VKI_target.getAttribute('VKI_type') == 'password') {
         this.VKI_target.storeReadOnly = this.VKI_target.readOnly;
         this.VKI_target.readOnly = 'readonly';
         if (this.VKI_clearPasswords) this.VKI_target.value = '';
       }
-
       if (this.VKI_target.getAttribute('VKI_numpadInput') == 'true') {
         this.VKI_keyboard.classList.add('numpadOnly');
-        kbNumpad.classList.add('showNegative', 'showDecimal');
-        kbNumpad.previousStyle = kbNumpad.style.display;
-        kbNumpad.style.display = '';
+        this.VKI_numpadCell.classList.add('showNegative', 'showDecimal');
+        this.VKI_numpadCell.previousStyle = this.VKI_numpadCell.style.display;
+        this.VKI_numpadCell.style.display = '';
         let noNeg = false;
         this.VKI_target.pattern = '^[+-]?[0-9]*\\.?[0-9]*$';
         if (this.VKI_target.min && parseFloat(this.VKI_target.min) >= 0) {
           this.VKI_target.pattern = '^\\+?[0-9]*\\.?[0-9]*$';
-          kbNumpad.classList.remove('showNegative');
+          this.VKI_numpadCell.classList.remove('showNegative');
           noNeg = true;
         }
         if (this.VKI_target.step && !parseFloat(this.VKI_target.step).toString().match(/\./)) {
           this.VKI_target.pattern = (noNeg) ? '^\\+?[0-9]*$' : '^[+-]?[0-9]*$';
-          kbNumpad.classList.remove('showDecimal');
+          this.VKI_numpadCell.classList.remove('showDecimal');
         }
       } else {
         this.VKI_keyboard.classList.remove('numpadOnly');
-        kbNumpad.style.display = kbNumpad.previousStyle;
+        this.VKI_numpadCell.style.display = this.VKI_numpadCell.previousStyle;
       }
 
       let elemStep = this.VKI_target;
@@ -2250,20 +2170,15 @@ var VKI_attach, VKI_close;
         }
       } while (elemStep = elemStep.offsetParent);
 
-      if (this.VKI_isIE6) document.body.appendChild(this.VKI_iframe);
       document.body.appendChild(this.VKI_keyboard);
       this.VKI_keyboard.style.position = this.VKI_target.keyboardPosition;
-      if (this.VKI_isOpera) this.VKI_keyboard.reflow();
 
       this.VKI_position(true);
-      if (self.VKI_isMoz || self.VKI_isWebKit) this.VKI_position(true);
       this.VKI_target.blur();
       this.VKI_target.focus();
+
+      this.VKI_KO_targetEvents?.();
     } else this.VKI_close();
-    //add Korean specific event listeners if layout is Korean
-    if(this.VKI_kt == '\ud55c\uad6d\uc5b4') {
-      VKI_KO_addKEventListener(this.VKI_target);
-    }
   };
 
 
@@ -2272,43 +2187,36 @@ var VKI_attach, VKI_close;
    *
    */
   this.VKI_position = function(force) {
-    if (self.VKI_target) {
-      let kPos = VKI_findPos(self.VKI_keyboard), wDim = VKI_innerDimensions(), sDis = VKI_scrollDist();
-      let place = false, fudge = self.VKI_target.offsetHeight + 3;
+    if (this.VKI_target) {
+      let kPos = VKI_findPos(this.VKI_keyboard), wDim = VKI_innerDimensions(), sDis = VKI_scrollDist();
+      let place = false, fudge = this.VKI_target.offsetHeight + 3;
       if (force !== true) {
-        if (kPos[1] + self.VKI_keyboard.offsetHeight - sDis[1] - wDim[1] > 0) {
+        if (kPos[1] + this.VKI_keyboard.offsetHeight - sDis[1] - wDim[1] > 0) {
           place = true;
-          fudge = -self.VKI_keyboard.offsetHeight - 3;
+          fudge = -this.VKI_keyboard.offsetHeight - 3;
         } else if (kPos[1] - sDis[1] < 0) place = true;
       }
       if (place || force === true) {
-        let iPos = VKI_findPos(self.VKI_target), scr = self.VKI_target;
+        let iPos = VKI_findPos(this.VKI_target), scr = this.VKI_target;
         while (scr = scr.parentNode) {
           if (scr == document.body) break;
           if (scr.scrollHeight > scr.offsetHeight || scr.scrollWidth > scr.offsetWidth) {
             if (!scr.getAttribute('VKI_scrollListener')) {
               scr.setAttribute('VKI_scrollListener', true);
-              VKI_addListener(scr, 'scroll', function() { self.VKI_position(true); }, false);
+              scr.addEventListener('scroll', function() { this.VKI_position(true); });
             } // Check if the input is in view
             let pPos = VKI_findPos(scr), oTop = iPos[1] - pPos[1], oLeft = iPos[0] - pPos[0];
-            let top = oTop + self.VKI_target.offsetHeight;
-            let left = oLeft + self.VKI_target.offsetWidth;
-            let bottom = scr.offsetHeight - oTop - self.VKI_target.offsetHeight;
-            let right = scr.offsetWidth - oLeft - self.VKI_target.offsetWidth;
-            self.VKI_keyboard.style.display = (top < 0 || left < 0 || bottom < 0 || right < 0) ? 'none' : '';
-            if (self.VKI_isIE6) self.VKI_iframe.style.display = (top < 0 || left < 0 || bottom < 0 || right < 0) ? 'none' : '';
+            let top = oTop + this.VKI_target.offsetHeight;
+            let left = oLeft + this.VKI_target.offsetWidth;
+            let bottom = scr.offsetHeight - oTop - this.VKI_target.offsetHeight;
+            let right = scr.offsetWidth - oLeft - this.VKI_target.offsetWidth;
+            this.VKI_keyboard.style.display = (top < 0 || left < 0 || bottom < 0 || right < 0) ? 'none' : '';
           }
         }
-        self.VKI_keyboard.style.top = iPos[1] + fudge + 'px';
-        self.VKI_keyboard.style.left = Math.max(10, Math.min(wDim[0] - self.VKI_keyboard.offsetWidth - 25, iPos[0])) + 'px';
-        if (self.VKI_isIE6) {
-          self.VKI_iframe.style.width = self.VKI_keyboard.offsetWidth + 'px';
-          self.VKI_iframe.style.height = self.VKI_keyboard.offsetHeight + 'px';
-          self.VKI_iframe.style.top = self.VKI_keyboard.style.top;
-          self.VKI_iframe.style.left = self.VKI_keyboard.style.left;
-        }
+        this.VKI_keyboard.style.top = iPos[1] + fudge + 'px';
+        this.VKI_keyboard.style.left = Math.max(10, Math.min(wDim[0] - this.VKI_keyboard.offsetWidth - 25, iPos[0])) + 'px';
       }
-      if (force === true) self.VKI_position();
+      if (force === true) this.VKI_position();
     }
   };
 
@@ -2319,44 +2227,31 @@ var VKI_attach, VKI_close;
    */
   this.VKI_close = VKI_close = function() {
     if (this.VKI_target) {
-      VKI_KO_clearCurrent();
+      if (this.VKI_move) this.VKI_move.drop();
+      this.VKI_KO_clearCurrent?.();
+
       if (this.VKI_target.getAttribute('VKI_type') == 'password')
         this.VKI_target.readOnly = this.VKI_target.storeReadOnly;
       if (this.VKI_target.getAttribute('VKI_numpadInput') == 'true')
         this.VKI_target.pattern = '.*';
       try {
         this.VKI_keyboard.parentNode.removeChild(this.VKI_keyboard);
-        if (this.VKI_isIE6) this.VKI_iframe.parentNode.removeChild(this.VKI_iframe);
       } catch (e) {}
       if (this.VKI_kt != this.VKI_kts) {
-        kbSelect.firstChild.nodeValue = this.VKI_kt = this.VKI_kts;
+        this.VKI_select.firstChild.nodeValue = this.VKI_kt = this.VKI_kts;
         this.VKI_buildKeys();
-      } kbSelect.getElementsByTagName('ol')[0].style.display = '';;
+      }
+      this.VKI_select.getElementsByTagName('ol')[0].style.display = '';;
+      this.VKI_select.sortType = 0;
       this.VKI_target.focus();
-      if (this.VKI_isIE) {
-        setTimeout(function() { self.VKI_target = false; }, 0);
-      } else this.VKI_target = false;
-      //remove Korean specific event builders if they exist
-      if (kEventListeners) {
-        VKI_KO_removeKEventListeners();
-      }
-      if (VKI_movement) {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', mouseUp);
-      }
+      this.VKI_target = false;
+      this.VKI_KO_targetEvents?.();
     }
   };
 
 
   /* ***** Private functions *************************************** */
-  function VKI_addListener(elem, type, func, cap) {
-    if (elem.addEventListener) {
-      elem.addEventListener(type, function(e) { func.call(elem, e); }, cap);
-    } else if (elem.attachEvent)
-      elem.attachEvent('on' + type, function() { func.call(elem); });
-  }
-
-  function VKI_findPos(obj) {
+  let VKI_findPos = function(obj) {
     if (self.VKI_target.keyboardPosition != 'fixed') {
       let curleft = curtop = 0, scr = obj;
       while ((scr = scr.parentNode) && scr != document.body) {
@@ -2372,9 +2267,9 @@ var VKI_attach, VKI_close;
       let boundingRect = obj.getBoundingClientRect();
       return [boundingRect.left, boundingRect.top];
     }
-  }
+  };
 
-  function VKI_innerDimensions() {
+  let VKI_innerDimensions = function() {
     if (self.innerHeight) {
       return [self.innerWidth, self.innerHeight];
     } else if (document.documentElement && document.documentElement.clientHeight) {
@@ -2382,9 +2277,9 @@ var VKI_attach, VKI_close;
     } else if (document.body)
       return [document.body.clientWidth, document.body.clientHeight];
     return [0, 0];
-  }
+  };
 
-  function VKI_scrollDist() {
+  let VKI_scrollDist = function() {
     let html = document.getElementsByTagName('html')[0];
     if (html.scrollTop && document.documentElement.scrollTop) {
       return [html.scrollLeft, html.scrollTop];
@@ -2393,23 +2288,31 @@ var VKI_attach, VKI_close;
     } else if (document.body.scrollTop)
       return [document.body.scrollLeft, document.body.scrollTop];
     return [0, 0];
-  }
+  };
 
-  function VKI_getStyle(obj, styleProp) {
+  let VKI_getStyle = function(obj, styleProp) {
     let y;
     if (obj.currentStyle) {
       y = obj.currentStyle[styleProp];
     } else if (window.getComputedStyle)
       y = window.getComputedStyle(obj, null)[styleProp];
     return y;
-  }
+  };
 
-  VKI_addListener(window, 'resize', this.VKI_position, false);
-  VKI_addListener(window, 'scroll', this.VKI_position, false);
-  this.VKI_kbsize();
-  VKI_addListener(window, 'load', VKI_buildKeyboardInputs, false);
-  // VKI_addListener(window, 'load', function() {
-  //   setTimeout(VKI_buildKeyboardInputs, 5);
-  // }, false);
+  window.addEventListener('resize', this.VKI_position);
+  window.addEventListener('scroll', this.VKI_position);
+  this.VKI_kbSize(0);
+  window.addEventListener('load', function() {
+    let inputElems = [
+      ...document.getElementsByTagName('input'),
+      ...document.getElementsByTagName('textarea')
+    ];
+    for (let x = 0, elem; elem = inputElems[x++];)
+      if (elem.nodeName == 'TEXTAREA' || elem.type == 'text' || elem.type == 'number' || elem.type == 'password')
+        if (elem.classList.contains('keyboardInput')) VKI_attach(elem);
 
+    document.documentElement.addEventListener('click', function(e) {
+      self.VKI_close();
+    });
+  });
 })();

@@ -21,7 +21,9 @@
   padding:0;
   line-height:normal;
   pointer-events:auto;
-  -moz-user-select:none;
+  -webkit-user-select:none;
+  -ms-user-select:none;
+  user-select:none;
   cursor:default;
 }
 #keyboardInputMaster * {
@@ -142,13 +144,9 @@
   padding:0 0.3em 0 0.2em;
 }
 #keyboardInputMaster thead tr th span:hover,
-#keyboardInputMaster thead tr th span.hover,
 #keyboardInputMaster thead tr th strong:hover,
-#keyboardInputMaster thead tr th strong.hover,
 #keyboardInputMaster thead tr th small:hover,
-#keyboardInputMaster thead tr th small.hover,
-#keyboardInputMaster thead tr th big:hover,
-#keyboardInputMaster thead tr th big.hover {
+#keyboardInputMaster thead tr th big:hover {
   background-color:#dddddd;
 }
 
@@ -204,8 +202,7 @@
 #keyboardInputMaster tbody tr td table tbody tr td.target {
   background-color:#ddddcc;
 }
-#keyboardInputMaster tbody tr td table tbody tr td:hover,
-#keyboardInputMaster tbody tr td table tbody tr td.hover {
+#keyboardInputMaster tbody tr td table tbody tr td:hover {
   border-top:0.1em solid #d5d5d5;
   border-right:0.1em solid #555555;
   border-bottom:0.1emsolid #555555;
