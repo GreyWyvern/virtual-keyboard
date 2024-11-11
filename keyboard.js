@@ -1362,7 +1362,7 @@ var VKI_attach, VKI_close;
       }
 
       if (!hangulText) {
-        VKI_KO_char = [];
+        VKI_KO_char = [text];
         hangulModify = false;
       } else text = hangulText;
 
@@ -1648,7 +1648,6 @@ var VKI_attach, VKI_close;
         this.VKI_select.title = this.VKI_i18n['02'];
         this.VKI_select.sortType = 0;
         this.VKI_select.addEventListener('click', function() {
-          self.VKI_KO_clearCurrent?.();
           let ol = this.getElementsByTagName('ol')[0];
           if (!ol.style.display || this.sortType < 2) {
               ol.style.display = 'block';
@@ -1767,15 +1766,15 @@ var VKI_attach, VKI_close;
             document.removeEventListener('mousemove', self.VKI_move.move);
             document.removeEventListener('mouseup', self.VKI_move.drop);
           }
-          this.VKI_move.addEventListener('mousedown', function(event) {
-              event.preventDefault();
+          this.VKI_move.addEventListener('mousedown', function(e) {
+              e.preventDefault();
               let coord = self.VKI_keyboard.getBoundingClientRect();
               if (self.VKI_target.keyboardPosition == 'fixed') {
-                self.VKI_move.pos[0] = event.pageX - coord.left;
-                self.VKI_move.pos[1] = event.pageY - coord.top;
+                self.VKI_move.pos[0] = e.pageX - coord.left;
+                self.VKI_move.pos[1] = e.pageY - coord.top;
               } else {
-                self.VKI_move.pos[0] = event.pageX + VKI_scrollDist()[0] - coord.left;
-                self.VKI_move.pos[1] = event.pageY + VKI_scrollDist()[1] - coord.top;
+                self.VKI_move.pos[0] = e.pageX + VKI_scrollDist()[0] - coord.left;
+                self.VKI_move.pos[1] = e.pageY + VKI_scrollDist()[1] - coord.top;
               }
               document.addEventListener('mousemove', self.VKI_move.move);
               document.addEventListener('mouseup', self.VKI_move.drop);
@@ -1797,9 +1796,11 @@ var VKI_attach, VKI_close;
           thth.appendChild(span);
 
         let strong = document.createElement('strong');
-            strong.appendChild(document.createTextNode('X'));
             strong.title = this.VKI_i18n['06'];
             strong.addEventListener('click', function() { self.VKI_close(); });
+          let big = document.createElement('big');
+              big.appendChild(document.createTextNode('×'));
+            strong.appendChild(big);
           VKI_mouseEvents(strong);
           thth.appendChild(strong);
 

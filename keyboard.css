@@ -110,12 +110,12 @@
 #keyboardInputMaster thead tr th div ol li.hover {
   background-color:#dddddd;
 }
-#keyboardInputMaster thead tr th span,
-#keyboardInputMaster thead tr th strong,
-#keyboardInputMaster thead tr th small,
-#keyboardInputMaster thead tr th big {
+#keyboardInputMaster thead tr th > span,
+#keyboardInputMaster thead tr th > strong,
+#keyboardInputMaster thead tr th > small,
+#keyboardInputMaster thead tr th > big {
   display:inline-block;
-  padding:0 0.4em;
+  padding:0 0.3em;
   height:1.4em;
   line-height:1.4em;
   border-top:0.1em solid #e5e5e5;
@@ -129,24 +129,29 @@
   vertical-align:middle;
   transition:background-color .15s ease-in-out;
 }
-#keyboardInputMaster thead tr th strong {
+#keyboardInputMaster thead tr th > strong {
   font-weight:bold;
 }
-#keyboardInputMaster thead tr th small {
+#keyboardInputMaster thead tr th > strong > big {
+  font-size:150%;
+  vertical-align:middle;
+  line-height:0;
+}
+#keyboardInputMaster thead tr th > small {
   border-radius:0.3em 0 0 0.3em;
   border-right:0.1em solid #aaaaaa;
-  padding:0 0.2em 0 0.3em;
+  padding-right:0.2em;
 }
-#keyboardInputMaster thead tr th big {
+#keyboardInputMaster thead tr th > big {
   border-radius:0 0.3em 0.3em 0;
   border-left:0 none;
   margin:0;
-  padding:0 0.3em 0 0.2em;
+  padding-left:0.2em;
 }
-#keyboardInputMaster thead tr th span:hover,
-#keyboardInputMaster thead tr th strong:hover,
-#keyboardInputMaster thead tr th small:hover,
-#keyboardInputMaster thead tr th big:hover {
+#keyboardInputMaster thead tr th > span:hover,
+#keyboardInputMaster thead tr th > strong:hover,
+#keyboardInputMaster thead tr th > small:hover,
+#keyboardInputMaster thead tr th > big:hover {
   background-color:#dddddd;
 }
 
