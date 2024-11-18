@@ -1157,12 +1157,12 @@ var VKI_attach, VKI_close;
             0);
         } else if (VKI_KO_jamo[jamoList[1]].tail != null && VKI_KO_jamo[jamoList[0]].tail != null) {
           tSum = VKI_KO_jamo[jamoList[0]].tail + VKI_KO_jamo[jamoList[1]].tail;
-          for (jamoTPair in VKI_KO_jamoDoubleTails)
+          for (const jamoTPair in VKI_KO_jamoDoubleTails)
             if (VKI_KO_jamoDoubleTails[jamoTPair].combo ==  tSum)
               return jamoTPair;
         } else if (VKI_KO_jamo[jamoList[0]].vowel != null && VKI_KO_jamo[jamoList[1]].vowel != null) {
           vSum = VKI_KO_jamo[jamoList[0]].vowel + VKI_KO_jamo[jamoList[1]].vowel;
-          for (jamoVPair in VKI_KO_jamoDoubleVowels)
+          for (const jamoVPair in VKI_KO_jamoDoubleVowels)
             if (VKI_KO_jamoDoubleVowels[jamoVPair].combo == vSum)
               return jamoVPair;
         }
@@ -1176,7 +1176,7 @@ var VKI_attach, VKI_close;
             VKI_KO_jamo[jamoList[2]].tail);
         } else if (VKI_KO_jamo[jamoList[2]].vowel != null) {
           vSum = VKI_KO_jamo[jamoList[1]].vowel + VKI_KO_jamo[jamoList[2]].vowel;
-          for (jamoVPair in VKI_KO_jamoDoubleVowels)
+          for (const jamoVPair in VKI_KO_jamoDoubleVowels)
             if (VKI_KO_jamoDoubleVowels[jamoVPair].combo == vSum)
               return hangulAlgorithm(
                 VKI_KO_jamo[jamoList[0]].lead,
@@ -1188,7 +1188,7 @@ var VKI_attach, VKI_close;
       case 4: // LVVT, LVTT
         if (VKI_KO_jamo[jamoList[2]].vowel != null) {
           vSum = VKI_KO_jamo[jamoList[1]].vowel + VKI_KO_jamo[jamoList[2]].vowel;
-          for (jamoVPair in VKI_KO_jamoDoubleVowels)
+          for (const jamoVPair in VKI_KO_jamoDoubleVowels)
             if (VKI_KO_jamoDoubleVowels[jamoVPair].combo == vSum)
               return hangulAlgorithm(
                 VKI_KO_jamo[jamoList[0]].lead,
@@ -1196,7 +1196,7 @@ var VKI_attach, VKI_close;
                 VKI_KO_jamo[jamoList[3]].tail);
         }
         tSum = VKI_KO_jamo[jamoList[2]].tail + VKI_KO_jamo[jamoList[3]].tail;
-        for (jamoTPair in VKI_KO_jamoDoubleTails)
+        for (const jamoTPair in VKI_KO_jamoDoubleTails)
           if (VKI_KO_jamoDoubleTails[jamoTPair].combo == tSum)
             return hangulAlgorithm(
               VKI_KO_jamo[jamoList[0]].lead,
@@ -1207,9 +1207,9 @@ var VKI_attach, VKI_close;
       case 5: // LVVTT
         vSum = VKI_KO_jamo[jamoList[1]].vowel + VKI_KO_jamo[jamoList[2]].vowel;
         tSum = VKI_KO_jamo[jamoList[3]].tail + VKI_KO_jamo[jamoList[4]].tail;
-        for (jamoVPair in VKI_KO_jamoDoubleVowels)
+        for (const jamoVPair in VKI_KO_jamoDoubleVowels)
           if (VKI_KO_jamoDoubleVowels[jamoVPair].combo == vSum)
-            for (jamoTPair in VKI_KO_jamoDoubleTails)
+            for (const jamoTPair in VKI_KO_jamoDoubleTails)
               if (VKI_KO_jamoDoubleTails[jamoTPair].combo == tSum)
                 return hangulAlgorithm(
                   VKI_KO_jamo[jamoList[0]].lead,
@@ -1684,7 +1684,7 @@ var VKI_attach, VKI_close;
             this.VKI_select.appendChild(ol);
           if (this.VKI_select.langCount > 1) thth.appendChild(this.VKI_select);
         this.VKI_langCode.index = [];
-        for (prop in this.VKI_langCode)
+        for (const prop in this.VKI_langCode)
           if (prop != 'index' && typeof this.VKI_langCode[prop] == 'string')
             this.VKI_langCode.index.push(prop);
         this.VKI_langCode.index.sort();
@@ -1874,7 +1874,7 @@ var VKI_attach, VKI_close;
                 } else td.appendChild(document.createTextNode(lkey[0] || '\xa0'));
 
                 if (this.VKI_deadkeysOn.checked)
-                  for (key in this.VKI_deadkey)
+                  for (const key in this.VKI_deadkey)
                     if (key === lkey[0]) { td.classList.add('deadkey'); break; }
                 if (lyt.length > this.VKI_keyCenter && y == lyt.length) td.classList.add('last');
                 if (lkey[0] == ' ' || lkey[1] == ' ') td.classList.add('space');
