@@ -9,7 +9,8 @@ Version 1.54 - November __, 2024
   - Virtual keyboard no longer works on inputs marked as "readonly"
   - Removed support for all versions of Internet Explorer
   - Removed support for Opera versions <= 12
-  - Added Korean, Tajik and Uyghur keyboard layouts
+  - Updated Korean keyboard layout
+  - Added Tajik and Uyghur keyboard layouts
   - Added Korean Jamo to Hangul input algorithm (VitaJane and Billy)
   - Add button allowing dragging of the keyboard; can be disabled
     (VitaJane and Billy)
@@ -272,6 +273,7 @@ Version 1.3 - July 30, 2007
 
 Keyboard Credits
 -----------------------------------------------------------------------
+  - Korean, Tajik & Uyghur keyboard layouts by Billy & VitaJane
   - Yiddish (Yidish Lebt) keyboard layout by Simche Taub (jidysz.net)
   - Urdu Phonetic keyboard layout by Khalid Malik
   - Yiddish keyboard layout by Helmut Wollmersdorfer
