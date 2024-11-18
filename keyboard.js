@@ -1777,7 +1777,7 @@ var VKI_attach, VKI_close;
             strong.title = this.VKI_i18n['06'];
             strong.addEventListener('click', function() { self.VKI_close(); });
           let big = document.createElement('big');
-              big.appendChild(document.createTextNode('×'));
+              big.appendChild(document.createTextNode('\u00d7'));
             strong.appendChild(big);
           thth.appendChild(strong);
 
