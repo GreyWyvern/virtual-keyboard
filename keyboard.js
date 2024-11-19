@@ -118,6 +118,13 @@ var VKI_attach, VKI_close;
   //   source code. If you decide to remove the US International
   //   keyboard layout, make sure you change the default layout
   //   (this.VKI_kt) above so it references an existing layout.
+  //
+  // - The 'lang' property determines what keyboard layouts will
+  //   appear when 'this.VKI_langAdapt' is true. The script will go
+  //   through the layouts in code order and display the first layout
+  //   with a matching language string. eg. If two layouts have the
+  //   same language code, the one listed *first* below will be the
+  //   layout displayed.
 
   this.VKI_layout['\u0627\u0644\u0639\u0631\u0628\u064a\u0629'] = {
     'name': 'Arabic', 'keys': [
@@ -173,6 +180,15 @@ var VKI_attach, VKI_close;
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['nl-BE', 'fr-BE'] };
 
+  this.VKI_layout['\u0411\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438'] = {
+    'name': 'Bulgarian BDS', 'keys': [
+      [['`', '~'], ['1', '!'], ['2', '?'], ['3', '+'], ['4', '"'], ['5', '%'], ['6', '='], ['7', ':'], ['8', '/'], ['9', '_'], ['0', '\u2116'], ['-', '\u0406'], ['=', 'V'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], [',', '\u044b'], ['\u0443', '\u0423'], ['\u0435', '\u0415'], ['\u0438', '\u0418'], ['\u0448', '\u0428'], ['\u0449', '\u0429'], ['\u043a', '\u041a'], ['\u0441', '\u0421'], ['\u0434', '\u0414'], ['\u0437', '\u0417'], ['\u0446', '\u0426'], [';', '\u00a7'], ['(', ')']],
+      [['Caps', 'Caps'], ['\u044c', '\u042c'], ['\u044f', '\u042f'], ['\u0430', '\u0410'], ['\u043e', '\u041e'], ['\u0436', '\u0416'], ['\u0433', '\u0413'], ['\u0442', '\u0422'], ['\u043d', '\u041d'], ['\u0412', '\u0412'], ['\u043c', '\u041c'], ['\u0447', '\u0427'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['\u042e', '\u044e'], ['\u0439', '\u0419'], ['\u044a', '\u042a'], ['\u044d', '\u042d'], ['\u0444', '\u0424'], ['\u0445', '\u0425'], ['\u043f', '\u041f'], ['\u0440', '\u0420'], ['\u043b', '\u041b'], ['\u0431', '\u0411'], ['Shift', 'Shift']],
+      [[' ', ' ']]
+    ], 'lang': ['bg'] };
+
   this.VKI_layout['\u0411\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438 \u0424\u043e\u043d\u0435\u0442\u0438\u0447\u0435\u043d'] = {
     'name': 'Bulgarian Phonetic', 'keys': [
       [['\u0447', '\u0427'], ['1', '!'], ['2', '@'], ['3', '#'], ['4', '$'], ['5', '%'], ['6', '^'], ['7', '&'], ['8', '*'], ['9', '('], ['0', ')'], ['-', '_'], ['=', '+'], ['Bksp', 'Bksp']],
@@ -181,15 +197,6 @@ var VKI_attach, VKI_close;
       [['Shift', 'Shift'], ['\u0437', '\u0417'], ['\u044C', '\u042C'], ['\u0446', '\u0426'], ['\u0436', '\u0416'], ['\u0431', '\u0411'], ['\u043D', '\u041D'], ['\u043C', '\u041C'], [',', '<'], ['.', '>'], ['/', '?'], ['Shift', 'Shift']],
       [[' ', ' ']]
     ], 'lang': ['bg'] };
-
-  this.VKI_layout['\u0411\u044a\u043b\u0433\u0430\u0440\u0441\u043a\u0438'] = {
-    'name': 'Bulgarian BDS', 'keys': [
-      [['`', '~'], ['1', '!'], ['2', '?'], ['3', '+'], ['4', '"'], ['5', '%'], ['6', '='], ['7', ':'], ['8', '/'], ['9', '_'], ['0', '\u2116'], ['-', '\u0406'], ['=', 'V'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], [',', '\u044b'], ['\u0443', '\u0423'], ['\u0435', '\u0415'], ['\u0438', '\u0418'], ['\u0448', '\u0428'], ['\u0449', '\u0429'], ['\u043a', '\u041a'], ['\u0441', '\u0421'], ['\u0434', '\u0414'], ['\u0437', '\u0417'], ['\u0446', '\u0426'], [';', '\u00a7'], ['(', ')']],
-      [['Caps', 'Caps'], ['\u044c', '\u042c'], ['\u044f', '\u042f'], ['\u0430', '\u0410'], ['\u043e', '\u041e'], ['\u0436', '\u0416'], ['\u0433', '\u0413'], ['\u0442', '\u0422'], ['\u043d', '\u041d'], ['\u0412', '\u0412'], ['\u043c', '\u041c'], ['\u0447', '\u0427'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['\u042e', '\u044e'], ['\u0439', '\u0419'], ['\u044a', '\u042a'], ['\u044d', '\u042d'], ['\u0444', '\u0424'], ['\u0445', '\u0425'], ['\u043f', '\u041f'], ['\u0440', '\u0420'], ['\u043b', '\u041b'], ['\u0431', '\u0411'], ['Shift', 'Shift']],
-      [[' ', ' ']]
-    ]};
 
   this.VKI_layout['\u09ac\u09be\u0982\u09b2\u09be'] = {
     'name': 'Bengali', 'keys': [
@@ -270,7 +277,7 @@ var VKI_attach, VKI_close;
       [['Caps', 'Caps'], ['\u2799', '\u279a', '\u2798', '\u2758'], ['\u27b5', '\u27b6', '\u27b4', '\u2759'], ['\u27b8', '\u27b9', '\u27b7', '\u275a'], ['\u2794', '\u279c', '\u27ba', '\u27bb'], ['\u279d', '\u279e', '\u27a1', '\u2772'], ['\u27a9', '\u27aa', '\u27ab', '\u27ac'], ['\u27a4', '\u27a3', '\u27a2', '\u279b'], ['\u27b3', '\u27bc', '\u27bd', '\u2773'], ['\u27ad', '\u27ae', '\u27af', '\u27b1'], ['\u27a8', '\u27a6', '\u27a5', '\u27a7'], ['\u279f', '\u27a0', '\u27be', '\u27b2'], ['Enter', 'Enter']],
       [['Shift', 'Shift'],  ['\u270c', '\u270b', '\u270a', '\u270d'], ['\u274f', '\u2750', '\u2751', '\u2752'], ['\u273f', '\u2740', '\u2741', '\u2742'], ['\u2747', '\u2748', '\u274a', '\u274b'], ['\u2757', '\u2755', '\u2762', '\u2763'], ['\u2753', '\u2754', '\u27b0', '\u27bf'], ['\u270f', '\u2710', '\u270e', '\u2774'], ['\u2712', '\u2711', '\u274d', '\u274e'], ['\u2709', '\u2706', '\u2708', '\u2707'], ['\u275b', '\u275d', '\u2761', '\u2775'], ['\u275c', '\u275e', '\u275f', '\u2760'], ['Shift', 'Shift']],
       [['AltLk', 'AltLk'], [' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
-    ]};
+    ], 'lang': [] };
 
   this.VKI_layout['\u078b\u07a8\u0788\u07ac\u0780\u07a8\u0784\u07a6\u0790\u07b0'] = {
     'name': 'Divehi', 'keys': [
@@ -288,25 +295,7 @@ var VKI_attach, VKI_close;
       [['Caps', 'Caps'], ['a', 'A'], ['o', 'O'], ['e', 'E'], ['u', 'U'], ['i', 'I'], ['d', 'D'], ['h', 'H'], ['t', 'T'], ['n', 'N'], ['s', 'S'], ['-', '_'], ['Enter', 'Enter']],
       [['Shift', 'Shift'], [';', ':'], ['q', 'Q'], ['j', 'J'], ['k', 'K'], ['x', 'X'], ['b', 'B'], ['m', 'M'], ['w', 'W'], ['v', 'V'], ['z', 'Z'], ['Shift', 'Shift']],
       [[' ', ' ']]
-    ]};
-
-  this.VKI_layout['\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac'] = {
-    'name': 'Greek', 'keys': [
-      [['`', '~'], ['1', '!'], ['2', '@', '\u00b2'], ['3', '#', '\u00b3'], ['4', '$', '\u00a3'], ['5', '%', '\u00a7'], ['6', '^', '\u00b6'], ['7', '&'], ['8', '*', '\u00a4'], ['9', '(', '\u00a6'], ['0', ')', '\u00ba'], ['-', '_', '\u00b1'], ['=', '+', '\u00bd'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], [';', ':'], ['\u03c2', '^'], ['\u03b5', '\u0395'], ['\u03c1', '\u03a1'], ['\u03c4', '\u03a4'], ['\u03c5', '\u03a5'], ['\u03b8', '\u0398'], ['\u03b9', '\u0399'], ['\u03bf', '\u039f'], ['\u03c0', '\u03a0'], ['[', '{', '\u201c'], [']', '}', '\u201d'], ['\\', '|', '\u00ac']],
-      [['Caps', 'Caps'], ['\u03b1', '\u0391'], ['\u03c3', '\u03a3'], ['\u03b4', '\u0394'], ['\u03c6', '\u03a6'], ['\u03b3', '\u0393'], ['\u03b7', '\u0397'], ['\u03be', '\u039e'], ['\u03ba', '\u039a'], ['\u03bb', '\u039b'], ['\u0384', '\u00a8', '\u0385'], ['\'', '"'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['<', '>'], ['\u03b6', '\u0396'], ['\u03c7', '\u03a7'], ['\u03c8', '\u03a8'], ['\u03c9', '\u03a9'], ['\u03b2', '\u0392'], ['\u03bd', '\u039d'], ['\u03bc', '\u039c'], [',', '<'], ['.', '>'], ['/', '?'], ['Shift', 'Shift']],
-      [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
-    ], 'lang': ['el'] };
-
-  this.VKI_layout['Eesti'] = {
-    'name': 'Estonian', 'keys': [
-      [['\u02C7', '~'], ['1', '!'], ['2', '"', '@', '@'], ['3', '#', '\u00A3', '\u00A3'], ['4', '\u00A4', '$', '$'], ['5', '%', '\u20AC'], ['6', '&'], ['7', '/', '{', '{'], ['8', '(', '[', '['], ['9', ')', ']', ']'], ['0', '=', '}', '}'], ['+', '?', '\\', '\\'], ['\u00B4', '`'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['q', 'Q'], ['w', 'W'], ['e', 'E', '\u20AC'], ['r', 'R'], ['t', 'T'], ['y', 'Y'], ['u', 'U'], ['i', 'I'], ['o', 'O'], ['p', 'P'], ['\u00FC', '\u00DC'], ['\u00F5', '\u00D5', '\u00A7', '\u00A7'], ['\'', '*', '\u00BD', '\u00BD']],
-      [['Caps', 'Caps'], ['a', 'A'], ['s', 'S', '\u0161', '\u0160'], ['d', 'D'], ['f', 'F'], ['g', 'G'], ['h', 'H'], ['j', 'J'], ['k', 'K'], ['l', 'L'], ['\u00F6', '\u00D6'], ['\u00E4', '\u00C4', '^', '^'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['<', '>', '|', '|'], ['z', 'Z', '\u017E', '\u017D'], ['x', 'X'], ['c', 'C'], ['v', 'V'], ['b', 'B'], ['n', 'N'], ['m', 'M'], [',', ';'], ['.', ':'], ['-', '_'], ['Shift', 'Shift']],
-      [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
-    ], 'lang': ['et'] };
+    ], 'lang': [] };
 
   this.VKI_layout['Espa\u00f1ol'] = {
     'name': 'Spanish', 'keys': [
@@ -316,6 +305,15 @@ var VKI_attach, VKI_close;
       [['Shift', 'Shift'], ['<', '>'], ['z', 'Z'], ['x', 'X'], ['c', 'C'], ['v', 'V'], ['b', 'B'], ['n', 'N'], ['m', 'M'], [',', ';'], ['.', ':'], ['-', '_'], ['Shift', 'Shift']],
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['es'] };
+
+  this.VKI_layout['Eesti'] = {
+    'name': 'Estonian', 'keys': [
+      [['\u02C7', '~'], ['1', '!'], ['2', '"', '@', '@'], ['3', '#', '\u00A3', '\u00A3'], ['4', '\u00A4', '$', '$'], ['5', '%', '\u20AC'], ['6', '&'], ['7', '/', '{', '{'], ['8', '(', '[', '['], ['9', ')', ']', ']'], ['0', '=', '}', '}'], ['+', '?', '\\', '\\'], ['\u00B4', '`'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['q', 'Q'], ['w', 'W'], ['e', 'E', '\u20AC'], ['r', 'R'], ['t', 'T'], ['y', 'Y'], ['u', 'U'], ['i', 'I'], ['o', 'O'], ['p', 'P'], ['\u00FC', '\u00DC'], ['\u00F5', '\u00D5', '\u00A7', '\u00A7'], ['\'', '*', '\u00BD', '\u00BD']],
+      [['Caps', 'Caps'], ['a', 'A'], ['s', 'S', '\u0161', '\u0160'], ['d', 'D'], ['f', 'F'], ['g', 'G'], ['h', 'H'], ['j', 'J'], ['k', 'K'], ['l', 'L'], ['\u00F6', '\u00D6'], ['\u00E4', '\u00C4', '^', '^'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['<', '>', '|', '|'], ['z', 'Z', '\u017E', '\u017D'], ['x', 'X'], ['c', 'C'], ['v', 'V'], ['b', 'B'], ['n', 'N'], ['m', 'M'], [',', ';'], ['.', ':'], ['-', '_'], ['Shift', 'Shift']],
+      [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
+    ], 'lang': ['et'] };
 
   this.VKI_layout['\u062f\u0631\u06cc'] = {
     'name': 'Dari', 'keys': [
@@ -352,6 +350,15 @@ var VKI_attach, VKI_close;
       [['Shift', 'Shift'], ['<', '>'], ['w', 'W'], ['x', 'X'], ['c', 'C'], ['v', 'V'], ['b', 'B'], ['n', 'N'], [',', '?'], [';', '.'], [':', '/'], ['!', '\u00a7'], ['Shift', 'Shift']],
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['fr'] };
+
+  this.VKI_layout['\u0395\u03bb\u03bb\u03b7\u03bd\u03b9\u03ba\u03ac'] = {
+    'name': 'Greek', 'keys': [
+      [['`', '~'], ['1', '!'], ['2', '@', '\u00b2'], ['3', '#', '\u00b3'], ['4', '$', '\u00a3'], ['5', '%', '\u00a7'], ['6', '^', '\u00b6'], ['7', '&'], ['8', '*', '\u00a4'], ['9', '(', '\u00a6'], ['0', ')', '\u00ba'], ['-', '_', '\u00b1'], ['=', '+', '\u00bd'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], [';', ':'], ['\u03c2', '^'], ['\u03b5', '\u0395'], ['\u03c1', '\u03a1'], ['\u03c4', '\u03a4'], ['\u03c5', '\u03a5'], ['\u03b8', '\u0398'], ['\u03b9', '\u0399'], ['\u03bf', '\u039f'], ['\u03c0', '\u03a0'], ['[', '{', '\u201c'], [']', '}', '\u201d'], ['\\', '|', '\u00ac']],
+      [['Caps', 'Caps'], ['\u03b1', '\u0391'], ['\u03c3', '\u03a3'], ['\u03b4', '\u0394'], ['\u03c6', '\u03a6'], ['\u03b3', '\u0393'], ['\u03b7', '\u0397'], ['\u03be', '\u039e'], ['\u03ba', '\u039a'], ['\u03bb', '\u039b'], ['\u0384', '\u00a8', '\u0385'], ['\'', '"'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['<', '>'], ['\u03b6', '\u0396'], ['\u03c7', '\u03a7'], ['\u03c8', '\u03a8'], ['\u03c9', '\u03a9'], ['\u03b2', '\u0392'], ['\u03bd', '\u039d'], ['\u03bc', '\u039c'], [',', '<'], ['.', '>'], ['/', '?'], ['Shift', 'Shift']],
+      [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
+    ], 'lang': ['el'] };
 
   this.VKI_layout['Gaeilge'] = {
     'name': 'Irish / Gaelic', 'keys': [
@@ -572,7 +579,7 @@ var VKI_attach, VKI_close;
       [['Caps', 'Caps'], ['\u262f', '\u2670', '\u2671', '\u267e'], ['\u263c', '\u2699', '\u263d', '\u263e'], ['\u26c4', '\u2603', '\u26c7', '\u26c6'], ['\u26a0', '\u26a1', '\u2621', '\u26d4'], ['\u26e4', '\u26e5', '\u26e6', '\u26e7'], ['\u260a', '\u260b', '\u260c', '\u260d'], ['\u269c', '\u269b', '\u269d', '\u2604'], ['\u26b3', '\u26b4', '\u26b5', '\u26b6'], ['\u26b7', '\u26bf', '\u26b8', '\u26f8'], ['\u26b9', '\u26ba', '\u26bb', '\u26bc'], ['\u26bd', '\u26be', '\u269f', '\u269e'], ['Enter', 'Enter']],
       [['Shift', 'Shift'], ['\u2600', '\u2601', '\u26c5', '\u26c8'], ['\u2691', '\u2690', '\u26ab', '\u26aa'], ['\u26cb', '\u26cc', '\u26cd', '\u26ce'], ['\u26cf', '\u26d0', '\u26d1', '\u26d2'], ['\u26d3', '\u26d5', '\u26d6', '\u26d7'], ['\u26da', '\u26db', '\u26dd', '\u26de'], ['\u26df', '\u26e0', '\u26e1', '\u26e2'], ['\u26e3', '\u26e8', '\u26e9', '\u26ea'], ['\u26eb', '\u26ec', '\u26ed', '\u26ee'], ['\u26ef', '\u26f0', '\u26f2', '\u26f3'], ['\u26f4', '\u26f5', '\u26f6', '\u26f7'], ['Shift', 'Shift']],
       [['AltLk', 'AltLk'], [' ', ' ', ' ', ' '], ['Alt', 'Alt']]
-    ]};
+    ], 'lang': [] };
 
   this.VKI_layout['\u041c\u043e\u043d\u0433\u043e\u043b'] = {
     'name': 'Mongolian Cyrillic', 'keys': [
@@ -646,15 +653,6 @@ var VKI_attach, VKI_close;
       [['AltLk', 'AltLk'], [' ', ' ', ' ', ' '], ['Alt', 'Alt']]
     ], 'lang': ['zh-Latn'] };
 
-  this.VKI_layout['Polski'] = {
-    'name': 'Polish (214)', 'keys': [
-      [['\u02DB', '\u00B7'], ['1', '!', '~'], ['2', '"', '\u02C7'], ['3', '#', '^'], ['4', '\u00A4', '\u02D8'], ['5', '%', '\u00B0'], ['6', '&', '\u02DB'], ['7', '/', '`'], ['8', '(', '\u00B7'], ['9', ')', '\u00B4'], ['0', '=', '\u02DD'], ['+', '?', '\u00A8'], ['\'', '*', '\u00B8'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['q', 'Q', '\\'], ['w', 'W', '\u00A6'], ['e', 'E'], ['r', 'R'], ['t', 'T'], ['z', 'Z'], ['u', 'U', '\u20AC'], ['i', 'I'], ['o', 'O'], ['p', 'P'], ['\u017C', '\u0144', '\u00F7'], ['\u015B', '\u0107', '\u00D7'], ['\u00F3', '\u017A']],
-      [['Caps', 'Caps'], ['a', 'A'], ['s', 'S', '\u0111'], ['d', 'D', '\u0110'], ['f', 'F'], ['g', 'G'], ['h', 'H'], ['j', 'J'], ['k', 'K'], ['l', 'L'], ['\u0142', '\u0141', '$'], ['\u0105', '\u0119', '\u00DF'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['<', '>'], ['y', 'Y'], ['x', 'X'], ['c', 'C'], ['v', 'V', '@'], ['b', 'B', '{'], ['n', 'N', '}'], ['m', 'M', '\u00A7'], [',', ';', '<'], ['.', ':', '>'], ['-', '_'], ['Shift', 'Shift']],
-      [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
-    ]};
-
   this.VKI_layout['Polski Programisty'] = {
     'name': 'Polish Programmers', 'keys': [
       [['`', '~'], ['1', '!'], ['2', '@'], ['3', '#'], ['4', '$'], ['5', '%'], ['6', '^'], ['7', '&'], ['8', '*'], ['9', '('], ['0', ')'], ['-', '_'], ['=', '+'], ['Bksp', 'Bksp']],
@@ -664,14 +662,14 @@ var VKI_attach, VKI_close;
       [[' ', ' ', ' ', ' '], ['Alt', 'Alt']]
     ], 'lang': ['pl'] };
 
-  this.VKI_layout['Portugu\u00eas Brasileiro'] = {
-    'name': 'Portuguese (Brazil)', 'keys': [
-      [['\'', '"'], ['1', '!', '\u00b9'], ['2', '@', '\u00b2'], ['3', '#', '\u00b3'], ['4', '$', '\u00a3'], ['5', '%', '\u00a2'], ['6', '\u00a8', '\u00ac'], ['7', '&'], ['8', '*'], ['9', '('], ['0', ')'], ['-', '_'], ['=', '+', '\u00a7'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['q', 'Q', '/'], ['w', 'W', '?'], ['e', 'E', '\u20ac'], ['r', 'R'], ['t', 'T'], ['y', 'Y'], ['u', 'U'], ['i', 'I'], ['o', 'O'], ['p', 'P'], ['\u00b4', '`'], ['[', '{', '\u00aa'], ['Enter', 'Enter']],
-      [['Caps', 'Caps'], ['a', 'A'], ['s', 'S'], ['d', 'D'], ['f', 'F'], ['g', 'G'], ['h', 'H'], ['j', 'J'], ['k', 'K'], ['l', 'L'], ['\u00e7', '\u00c7'], ['~', '^'], [']', '}', '\u00ba'], ['/', '?']],
-      [['Shift', 'Shift'], ['\\', '|'], ['z', 'Z'], ['x', 'X'], ['c', 'C', '\u20a2'], ['v', 'V'], ['b', 'B'], ['n', 'N'], ['m', 'M'], [',', '<'], ['.', '>'], [':', ':'], ['Shift', 'Shift']],
+  this.VKI_layout['Polski'] = {
+    'name': 'Polish (214)', 'keys': [
+      [['\u02DB', '\u00B7'], ['1', '!', '~'], ['2', '"', '\u02C7'], ['3', '#', '^'], ['4', '\u00A4', '\u02D8'], ['5', '%', '\u00B0'], ['6', '&', '\u02DB'], ['7', '/', '`'], ['8', '(', '\u00B7'], ['9', ')', '\u00B4'], ['0', '=', '\u02DD'], ['+', '?', '\u00A8'], ['\'', '*', '\u00B8'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['q', 'Q', '\\'], ['w', 'W', '\u00A6'], ['e', 'E'], ['r', 'R'], ['t', 'T'], ['z', 'Z'], ['u', 'U', '\u20AC'], ['i', 'I'], ['o', 'O'], ['p', 'P'], ['\u017C', '\u0144', '\u00F7'], ['\u015B', '\u0107', '\u00D7'], ['\u00F3', '\u017A']],
+      [['Caps', 'Caps'], ['a', 'A'], ['s', 'S', '\u0111'], ['d', 'D', '\u0110'], ['f', 'F'], ['g', 'G'], ['h', 'H'], ['j', 'J'], ['k', 'K'], ['l', 'L'], ['\u0142', '\u0141', '$'], ['\u0105', '\u0119', '\u00DF'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['<', '>'], ['y', 'Y'], ['x', 'X'], ['c', 'C'], ['v', 'V', '@'], ['b', 'B', '{'], ['n', 'N', '}'], ['m', 'M', '\u00A7'], [',', ';', '<'], ['.', ':', '>'], ['-', '_'], ['Shift', 'Shift']],
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
-    ], 'lang': ['pt-BR'] };
+    ], 'lang': ['pl'] };
 
   this.VKI_layout['Portugu\u00eas'] = {
     'name': 'Portuguese', 'keys': [
@@ -681,6 +679,15 @@ var VKI_attach, VKI_close;
       [['Shift', 'Shift'], ['<', '>', '\\'], ['z', 'Z'], ['x', 'X'], ['c', 'C'], ['v', 'V'], ['b', 'B'], ['n', 'N'], ['m', 'M'], [',', ';'], ['.', ':'], ['-', '_'], ['Shift', 'Shift']],
       [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
     ], 'lang': ['pt'] };
+
+  this.VKI_layout['Portugu\u00eas Brasileiro'] = {
+    'name': 'Portuguese (Brazil)', 'keys': [
+      [['\'', '"'], ['1', '!', '\u00b9'], ['2', '@', '\u00b2'], ['3', '#', '\u00b3'], ['4', '$', '\u00a3'], ['5', '%', '\u00a2'], ['6', '\u00a8', '\u00ac'], ['7', '&'], ['8', '*'], ['9', '('], ['0', ')'], ['-', '_'], ['=', '+', '\u00a7'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['q', 'Q', '/'], ['w', 'W', '?'], ['e', 'E', '\u20ac'], ['r', 'R'], ['t', 'T'], ['y', 'Y'], ['u', 'U'], ['i', 'I'], ['o', 'O'], ['p', 'P'], ['\u00b4', '`'], ['[', '{', '\u00aa'], ['Enter', 'Enter']],
+      [['Caps', 'Caps'], ['a', 'A'], ['s', 'S'], ['d', 'D'], ['f', 'F'], ['g', 'G'], ['h', 'H'], ['j', 'J'], ['k', 'K'], ['l', 'L'], ['\u00e7', '\u00c7'], ['~', '^'], [']', '}', '\u00ba'], ['/', '?']],
+      [['Shift', 'Shift'], ['\\', '|'], ['z', 'Z'], ['x', 'X'], ['c', 'C', '\u20a2'], ['v', 'V'], ['b', 'B'], ['n', 'N'], ['m', 'M'], [',', '<'], ['.', '>'], [':', ':'], ['Shift', 'Shift']],
+      [[' ', ' ', ' ', ' '], ['AltGr', 'AltGr']]
+    ], 'lang': ['pt-BR'] };
 
   this.VKI_layout['Rom\u00e2n\u0103'] = {
     'name': 'Romanian', 'keys': [
@@ -841,16 +848,7 @@ var VKI_attach, VKI_close;
       [['Caps', 'Caps'], ['\u0E49', '\u0E4B'], ['\u0E17', '\u0E18'], ['\u0E07', '\u0E33'], ['\u0E01', '\u0E13'], ['\u0E31', '\u0E4C'], ['\u0E35', '\u0E37'], ['\u0E32', '\u0E1C'], ['\u0E19', '\u0E0A'], ['\u0E40', '\u0E42'], ['\u0E44', '\u0E06'], ['\u0E02', '\u0E11'], ['Enter', 'Enter']],
       [['Shift', 'Shift'], ['\u0E1A', '\u0E0E'], ['\u0E1B', '\u0E0F'], ['\u0E25', '\u0E10'], ['\u0E2B', '\u0E20'], ['\u0E34', '\u0E31'], ['\u0E04', '\u0E28'], ['\u0E2A', '\u0E2E'], ['\u0E30', '\u0E1F'], ['\u0E08', '\u0E09'], ['\u0E1E', '\u0E2C'], ['Shift', 'Shift']],
       [[' ', ' ']]
-    ]};
-
-  this.VKI_layout['T\u00fcrk\u00e7e F'] = {
-    'name': 'Turkish F', 'keys': [
-      [['+', '*', '\u00ac'], ['1', '!', '\u00b9', '\u00a1'], ['2', '"', '\u00b2'], ['3', '^', '#', '\u00b3'], ['4', '$', '\u00bc', '\u00a4'], ['5', '%', '\u00bd'], ['6', '&', '\u00be'], ['7', '\'', '{'], ['8', '(', '['], ['9', ')', ']'], ['0', '=', '}'], ['/', '?', '\\', '\u00bf'], ['-', '_', '|'], ['Bksp', 'Bksp']],
-      [['Tab', 'Tab'], ['f', 'F', '@'], ['g', 'G'], ['\u011f', '\u011e'], ['\u0131', 'I', '\u00b6', '\u00ae'], ['o', 'O'], ['d', 'D', '\u00a5'], ['r', 'R'], ['n', 'N'], ['h', 'H', '\u00f8', '\u00d8'], ['p', 'P', '\u00a3'], ['q', 'Q', '\u00a8'], ['w', 'W', '~'], ['x', 'X', '`']],
-      [['Caps', 'Caps'], ['u', 'U', '\u00e6', '\u00c6'], ['i', '\u0130', '\u00df', '\u00a7'], ['e', 'E', '\u20ac'], ['a', 'A', ' ', '\u00aa'], ['\u00fc', '\u00dc'], ['t', 'T'], ['k', 'K'], ['m', 'M'], ['l', 'L'], ['y', 'Y', '\u00b4'], ['\u015f', '\u015e'], ['Enter', 'Enter']],
-      [['Shift', 'Shift'], ['<', '>', '|', '\u00a6'], ['j', 'J', '\u00ab', '<'], ['\u00f6', '\u00d6', '\u00bb', '>'], ['v', 'V', '\u00a2', '\u00a9'], ['c', 'C'], ['\u00e7', '\u00c7'], ['z', 'Z'], ['s', 'S', '\u00b5', '\u00ba'], ['b', 'B', '\u00d7'], ['.', ':', '\u00f7'], [',', ';', '-'], ['Shift', 'Shift']],
-      [[' ', ' ', ' ', ' '],  ['AltGr', 'AltGr']]
-    ]};
+    ], 'lang': ['th'] };
 
   this.VKI_layout['T\u00fcrk\u00e7e Q'] = {
     'name': 'Turkish Q', 'keys': [
@@ -858,6 +856,15 @@ var VKI_attach, VKI_close;
       [['Tab', 'Tab'], ['q', 'Q', '@'], ['w', 'W'], ['e', 'E', '\u20ac'], ['r', 'R'], ['t', 'T'], ['y', 'Y'], ['u', 'U'], ['\u0131', 'I', 'i', '\u0130'], ['o', 'O'], ['p', 'P'], ['\u011f', '\u011e', '\u00a8'], ['\u00fc', '\u00dc', '~'], [',', ';', '`']],
       [['Caps', 'Caps'], ['a', 'A', '\u00e6', '\u00c6'], ['s', 'S', '\u00df'], ['d', 'D'], ['f', 'F'], ['g', 'G'], ['h', 'H'], ['j', 'J'], ['k', 'K'], ['l', 'L'], ['\u015f', '\u015e', '\u00b4'], ['i', '\u0130'], ['Enter', 'Enter']],
       [['Shift', 'Shift'], ['<', '>', '|'], ['z', 'Z'], ['x', 'X'], ['c', 'C'], ['v', 'V'], ['b', 'B'], ['n', 'N'], ['m', 'M'], ['\u00f6', '\u00d6'], ['\u00e7', '\u00c7'], ['.', ':'], ['Shift', 'Shift']],
+      [[' ', ' ', ' ', ' '],  ['AltGr', 'AltGr']]
+    ], 'lang': ['tr'] };
+
+  this.VKI_layout['T\u00fcrk\u00e7e F'] = {
+    'name': 'Turkish F', 'keys': [
+      [['+', '*', '\u00ac'], ['1', '!', '\u00b9', '\u00a1'], ['2', '"', '\u00b2'], ['3', '^', '#', '\u00b3'], ['4', '$', '\u00bc', '\u00a4'], ['5', '%', '\u00bd'], ['6', '&', '\u00be'], ['7', '\'', '{'], ['8', '(', '['], ['9', ')', ']'], ['0', '=', '}'], ['/', '?', '\\', '\u00bf'], ['-', '_', '|'], ['Bksp', 'Bksp']],
+      [['Tab', 'Tab'], ['f', 'F', '@'], ['g', 'G'], ['\u011f', '\u011e'], ['\u0131', 'I', '\u00b6', '\u00ae'], ['o', 'O'], ['d', 'D', '\u00a5'], ['r', 'R'], ['n', 'N'], ['h', 'H', '\u00f8', '\u00d8'], ['p', 'P', '\u00a3'], ['q', 'Q', '\u00a8'], ['w', 'W', '~'], ['x', 'X', '`']],
+      [['Caps', 'Caps'], ['u', 'U', '\u00e6', '\u00c6'], ['i', '\u0130', '\u00df', '\u00a7'], ['e', 'E', '\u20ac'], ['a', 'A', ' ', '\u00aa'], ['\u00fc', '\u00dc'], ['t', 'T'], ['k', 'K'], ['m', 'M'], ['l', 'L'], ['y', 'Y', '\u00b4'], ['\u015f', '\u015e'], ['Enter', 'Enter']],
+      [['Shift', 'Shift'], ['<', '>', '|', '\u00a6'], ['j', 'J', '\u00ab', '<'], ['\u00f6', '\u00d6', '\u00bb', '>'], ['v', 'V', '\u00a2', '\u00a9'], ['c', 'C'], ['\u00e7', '\u00c7'], ['z', 'Z'], ['s', 'S', '\u00b5', '\u00ba'], ['b', 'B', '\u00d7'], ['.', ':', '\u00f7'], [',', ';', '-'], ['Shift', 'Shift']],
       [[' ', ' ', ' ', ' '],  ['AltGr', 'AltGr']]
     ], 'lang': ['tr'] };
 
@@ -895,7 +902,7 @@ var VKI_attach, VKI_close;
       [['Caps', 'Caps'], ['\u0627', '\u0622', '\uFDF2'], ['\u0633', '\u0635', '\u0610'], ['\u062F', '\u0688', '\uFDFA'], ['\u0641'], ['\u06AF', '\u063A'], ['\u062D', '\u06BE', '\u0612'], ['\u062C', '\u0636', '\uFDFB'], ['\u06A9', '\u062E'], ['\u0644'], ['\u061B', ':'], ['\'', '"'], ['Enter', 'Enter']],
       [['Shift', 'Shift'], ['\u0632', '\u0630', '\u060F'], ['\u0634', '\u0698', '\u060E'], ['\u0686', '\u062B', '\u0603'], ['\u0637', '\u0638'], ['\u0628', '', '\uFDFD'], ['\u0646', '\u06BA', '\u0600'], ['\u0645', '\u0658'], ['\u060C', '', '<'], ['\u06D4', '\u066B', '>'], ['/', '\u061F'], ['Shift', 'Shift']],
       [[' ', ' ', ' ', ' '], ['Alt', 'Alt']]
-    ]};
+    ], 'lang': ['ur'] };
 
   this.VKI_layout['US Standard'] = {
     'name': 'US Standard', 'keys': [
@@ -1623,7 +1630,6 @@ var VKI_attach, VKI_close;
   if (!this.VKI_layout[this.VKI_kt])
     return alert('No keyboard named "' + this.VKI_kt + '"');
 
-  this.VKI_langCode = {};
   let thead = document.createElement('thead');
     let thtr = document.createElement('tr');
       let thth = document.createElement('th');
@@ -1659,12 +1665,9 @@ var VKI_attach, VKI_close;
         });
         this.VKI_select.appendChild(document.createTextNode(this.VKI_kt));
         this.VKI_select.appendChild(document.createTextNode(' \u25be'));
-        this.VKI_select.langCount = 0;
-          let order = 0, ol = document.createElement('ol');
+          let order = 0, langs = 0, ol = document.createElement('ol');
             Object.keys(this.VKI_layout).forEach(ktype => {
               if (!this.VKI_layout[ktype].lang) this.VKI_layout[ktype].lang = [];
-              for (let x = 0; x < this.VKI_layout[ktype].lang.length; x++)
-                this.VKI_langCode[this.VKI_layout[ktype].lang[x].toLowerCase().replace(/-/g, '_')] = ktype;
               let li = document.createElement('li');
                   li.title = this.VKI_layout[ktype].name;
                   li.setAttribute('data-order', order++);
@@ -1679,16 +1682,10 @@ var VKI_attach, VKI_close;
                   });
                   li.appendChild(document.createTextNode(ktype));
                 ol.appendChild(li);
-              this.VKI_select.langCount++;
+              langs++;
             });
             this.VKI_select.appendChild(ol);
-          if (this.VKI_select.langCount > 1) thth.appendChild(this.VKI_select);
-        this.VKI_langCode.index = [];
-        for (const prop in this.VKI_langCode)
-          if (prop != 'index' && typeof this.VKI_langCode[prop] == 'string')
-            this.VKI_langCode.index.push(prop);
-        this.VKI_langCode.index.sort();
-        this.VKI_langCode.index.reverse();
+          if (langs > 1) thth.appendChild(this.VKI_select);
 
         if (this.VKI_numberPad) {
           let span = document.createElement('span');
@@ -2092,10 +2089,11 @@ var VKI_attach, VKI_close;
     if (!this.VKI_target) {
       this.VKI_target = elem;
       if (this.VKI_langAdapt && this.VKI_target.lang) {
-        let chg = false, lang = this.VKI_target.lang.toLowerCase().replace(/-/g, '_');
-        for (let x = 0; !chg && x < this.VKI_langCode.index.length; x++)
-          if (lang.indexOf(this.VKI_langCode.index[x]) == 0)
-            chg = this.VKI_select.firstChild.nodeValue = this.VKI_kt = this.VKI_langCode[this.VKI_langCode.index[x]];
+        let chg = false, lang = this.VKI_target.lang.toLowerCase().replace(/_/g, '-');
+        for (const layout in this.VKI_layout)
+          for (let y = 0; y < this.VKI_layout[layout].lang.length; y++)
+            if (!chg && lang == this.VKI_layout[layout].lang[y].toLowerCase())
+              chg = this.VKI_select.firstChild.nodeValue = this.VKI_kt = layout;
         if (chg) this.VKI_buildKeys();
       }
       try {
