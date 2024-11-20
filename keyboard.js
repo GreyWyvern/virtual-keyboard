@@ -1156,7 +1156,7 @@ var VKI_attach, VKI_close;
     switch (jamoList.length) {
       case 1: return jamoList;
 
-      case 2: // LV, VV, TT
+      case 2: // LV, TT, VV
         if (VKI_KO_jamo[jamoList[0]].lead != null && VKI_KO_jamo[jamoList[1]].vowel != null) {
           return hangulAlgorithm(
             VKI_KO_jamo[jamoList[0]].lead,
@@ -1225,53 +1225,6 @@ var VKI_attach, VKI_close;
     }
 
     return null;
-  };
-
-  /**
-   * Get the list of Jamo characters used to make up the given Hangul.
-   * Returns an array of Jamo compatible with VKI_KO_char. Basically
-   * the reverse of VKI_KO_getHangul.
-   * @param {*} Hangul character or Unicode of that character
-   * @returns array of Jamo that make up the given Hangul
-   */
-  let VKI_KO_getHangulParts = function(hangul) {
-    hangul = (typeof hangul == 'string') ? hangul.charCodeAt() : parseInt(hangul);
-
-    let jamo = [];
-
-    // Get tail, vowel, and lead values
-    let tail = Math.floor((hangul - 44032) % 28);
-    let vowel = Math.floor(1 + ((hangul - 44032 - tail) % 588) / 28);
-    let lead = Math.floor(1 + (hangul - 44032) / 588);
-
-    // Find unicode from values
-    for (const j in VKI_KO_jamo) {
-      if (VKI_KO_jamo[j].lead == lead) jamo.push(j);
-      if (VKI_KO_jamo[j].vowel == vowel) vowel = j;
-      if (VKI_KO_jamo[j].tail == tail) tail = j;
-    }
-
-    // Find two parts of vowel
-    if (Number.isInteger(vowel)) {
-      for (const j in VKI_KO_jamoDoubleVowels) {
-        if (VKI_KO_jamoDoubleVowels[j].vowel == vowel) {
-          jamo.push(VKI_KO_jamoDoubleVowels[j].pair[0]);
-          jamo.push(VKI_KO_jamoDoubleVowels[j].pair[1]);
-        }
-      }
-    } else jamo.push(vowel);
-
-    // Find two parts of tail
-    if (Number.isInteger(tail)) {
-      for (const j in VKI_KO_jamoDoubleTails) {
-        if (VKI_KO_jamoDoubleTails[j].tail == tail) {
-          jamo.push(VKI_KO_jamoDoubleTails[j].pair[0]);
-          jamo.push(VKI_KO_jamoDoubleTails[j].pair[1]);
-        }
-      }
-    } else jamo.push(tail);
-
-    return jamo;
   };
 
   /**
@@ -1381,51 +1334,6 @@ var VKI_attach, VKI_close;
     } else this.VKI_KO_clearCurrent();
 
     return [text, rng];
-  };
-
-  /**
-   * Called from VKI_backspace when selected keyboard is Korean. Checks
-   * if the backspaced character was Hangul and if so, checks if just
-   * one Jamo part of it can be deleted instead of the whole Hangul.
-   * @param {string} lastInput the character that was backspaced
-   * @param {array} rng current cursor range position in the field
-   */
-  this.VKI_KO_backspace = function(lastInput, rng) {
-
-    // If the backspaced character was Hangul or Jamo
-    if ((lastInput.charCodeAt() >= 12593 && lastInput.charCodeAt() <= 12643) || 
-        (lastInput.charCodeAt() >= 44032 && lastInput.charCodeAt() <= 55203)) {
-
-      // If nothing is in VKI_KO_char, get the Jamo from the
-      // backspaced Hangul and put it in VKI_KO_char
-      if (VKI_KO_char.length == 0)
-        VKI_KO_char = VKI_KO_getHangulParts(lastInput);
-
-      // Remove the last Jamo
-      VKI_KO_char.pop();
-
-      // Re-insert modified Hangul if it exists
-      if (VKI_KO_char.length != 0) {
-        lastInput = VKI_KO_getHangul(VKI_KO_char);
-        this.VKI_target.value = this.VKI_target.value.substr(0, rng[0]) + lastInput + this.VKI_target.value.substr(rng[1]);
-        this.VKI_target.setSelectionRange(rng[0] + lastInput.length, rng[0] + lastInput.length);
-      }
-    }
-
-    // If we're not currently working on any Hangul
-    if (VKI_KO_char.length == 0) {
-      // Check if previous character is also Hangul or Jamo and if
-      // so, load Jamo into VKI_KO_char
-      lastInput = this.VKI_target.value.substr(rng[0] - 2, rng[1] - 1);
-      if ((lastInput.charCodeAt() >= 12593 && lastInput.charCodeAt() <= 12643) || 
-          (lastInput.charCodeAt() >= 44032 && lastInput.charCodeAt() <= 55203)) {
-        VKI_KO_char = VKI_KO_getHangulParts(lastInput);
-      } else lastInput = '';
-    }
-
-    // Update the Korean complete button contents
-    let koComplete = document.getElementById('keyboardInputKOComplete');
-    if (koComplete) koComplete.textContent = lastInput;
   };
 
   // Apply Korean-specific event listeners if layout is Korean
@@ -2072,7 +1980,7 @@ var VKI_attach, VKI_close;
       this.VKI_target.setSelectionRange(rng[0] - 1, rng[0] - 1);
       // If using the Korean keyboard
       if (this.VKI_kt == '\ud55c\uad6d\uc5b4')
-        this.VKI_KO_backspace?.(lastInput, rng);
+        this.VKI_KO_clearCurrent?.();
     } // Readonly
     if (this.VKI_shift) this.VKI_modify('Shift');
     if (this.VKI_altgr) this.VKI_modify('AltGr');
