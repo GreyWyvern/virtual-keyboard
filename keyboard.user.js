@@ -1464,9 +1464,9 @@
    *
    */
   let VKI_attach = function(elem) {
-    if (elem.getAttribute('VKI_attachedUserScript')) return false;
+    if (elem.getAttribute('VKI_attached')) return false;
     elem.addEventListener('dblclick', function() { self.VKI_show(this); }, false);
-    elem.setAttribute('VKI_attachedUserScript', 'true');
+    elem.setAttribute('VKI_attached', 'true');
     elem.setAttribute('VKI_type', elem.type);
     elem.setAttribute('inputmode', 'none');
     if (elem.classList.contains('keyboardInputNumbersOnly')) {
