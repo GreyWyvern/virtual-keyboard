@@ -2,7 +2,11 @@
 
 Add a javascript virtual keyboard to text, password, textarea, and number inputs. Good for kiosk use, or to allow convenient input of characters from different languages.
 
-![example01](https://github.com/GreyWyvern/virtual-keyboard/assets/137631/9f877409-f29b-43d5-8605-a39210cee802)
+![keyboard-1-54](https://github.com/user-attachments/assets/6caa936d-e241-49fd-8804-41a1bdb4caaf)
+
+In version 1.54 the Korean keyboard layout is now functionally complete, allowing building of Korean Hangul from individual Jamo.
+
+![keyboard-1-54-ko](https://github.com/user-attachments/assets/88391c22-aa0b-4dba-b7f4-d51296af15f4)
 
 Includes a "User Script" version that can be added to browsers such as Firefox to enable the keyboard on all pages.
 
