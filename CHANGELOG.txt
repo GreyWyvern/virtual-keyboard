@@ -1,11 +1,11 @@
 HTML Virtual Keyboard Interface Script / User Javascript
-  Copyright (c) 2022 - GreyWyvern
+  Copyright (c) 2024 - GreyWyvern
 
 
 Full Changelog
 -----------------------------------------------------------------------
 
-Version 1.54 - November __, 2024
+Version 1.54 - November 26, 2024
   - Virtual keyboard no longer works on inputs marked as "readonly"
   - Removed support for all versions of Internet Explorer
   - Removed support for Opera versions <= 12
