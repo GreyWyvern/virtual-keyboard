@@ -11,7 +11,7 @@ See the project page at [greywyvern.com](https://greywyvern.com/code/javascript/
 SVG icon modified from [Icon Fonts](https://www.onlinewebfonts.com/icon); licenced by CC BY 3.0.
 
 ## Keyboard Credits
-- Tajik & Uyghur keyboard layouts by **Billy & VitaJane**
+- Korean, Tajik & Uyghur keyboard layouts by **Billy & VitaJane**
 - Yiddish (Yidish Lebt) keyboard layout by **Simche Taub** ([jidysz.net](https://jidysz.net))
 - Urdu Phonetic keyboard layout by **Khalid Malik**
 - Yiddish keyboard layout by **Helmut Wollmersdorfer**
