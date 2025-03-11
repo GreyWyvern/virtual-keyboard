@@ -1622,6 +1622,7 @@ var VKI_attach, VKI_close;
   this.VKI_keyboard.id = 'keyboardInputMaster';
   this.VKI_keyboard.dir = 'ltr';
   this.VKI_keyboard.cellSpacing = '0';
+  this.VKI_keyboard.classList.add('keyboardInputSize' + this.VKI_size);
   this.VKI_keyboard.addEventListener('click', function(e) {
     e.stopPropagation();
     return false;
