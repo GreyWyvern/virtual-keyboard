@@ -2039,7 +2039,7 @@ var VKI_attach, VKI_close;
     if (typeof this.VKI_target.maxlength == 'undefined' ||
         this.VKI_target.maxlength < 0 ||
         this.VKI_target.value.length < this.VKI_target.maxlength) {
-      if (!this.VKI_target.readOnly) {
+      if (!this.VKI_target.readOnly || this.VKI_target.getAttribute('VKI_type') == 'password') {
         let rng = [this.VKI_target.selectionStart, this.VKI_target.selectionEnd];
         // If using the Korean keyboard
         if (this.VKI_kt == '\ud55c\uad6d\uc5b4') {
@@ -2063,7 +2063,7 @@ var VKI_attach, VKI_close;
    */
   this.VKI_backspace = function() {
     this.VKI_target.focus();
-    if (!this.VKI_target.readOnly) {
+    if (!this.VKI_target.readOnly || this.VKI_target.getAttribute('VKI_type') == 'password') {
       let rng = [this.VKI_target.selectionStart, this.VKI_target.selectionEnd];
       // Get the character we're about to delete with backspace
       let lastInput = this.VKI_target.value.substr(rng[0] - 1, rng[1]);
